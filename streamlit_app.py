@@ -549,7 +549,7 @@ def main():
     # Header
     st.markdown("""
     <div style="text-align: center; padding: 1rem 0;">
-        <h1 style="color: #1e40af; margin-bottom: 0;">🔌 Route Optique Pro</h1>
+        <h1 style="color: #1e40af; margin-bottom: 0;">🔌 Route Optique ICT</h1>
         <p style="color: #6b7280; margin-top: 0;">Analyse avancée des infrastructures optiques</p>
     </div>
     """, unsafe_allow_html=True)
@@ -797,3 +797,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
