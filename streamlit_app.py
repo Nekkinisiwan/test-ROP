@@ -669,7 +669,7 @@ def main():
     # Header amélioré avec logo
     try:
         # Essayer de charger le logo
-        logo_base64 = get_base64_of_bin_file('/home/ubuntu/logo-ICT-group.png')
+        logo_base64 = get_base64_of_bin_file('logo-ICT-group.png')
         logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="ICT Group Logo">'
     except:
         # Fallback si le logo n'est pas trouvé
@@ -943,3 +943,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
