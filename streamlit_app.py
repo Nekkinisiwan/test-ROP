@@ -761,7 +761,7 @@ def main():
                                         st.metric("📍 Position", str(row.iloc[1]) if pd.notna(row.iloc[1]) else "N/A")
                                 
                                 # Extraire et afficher les segments
-                                segments = extract_route_segments(row)
+                                segments = extract_route_segments(row, df)
                                 
                                 if segments:
                                     st.markdown("#### 🗺️ Route Détaillée")
@@ -797,4 +797,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
