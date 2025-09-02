@@ -251,9 +251,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# requirements.txt (créer ce fichier aussi)
-# streamlit>=1.28.0
-# pandas>=2.0.0  
-# openpyxl>=3.1.0
-# xlrd>=2.0.0
