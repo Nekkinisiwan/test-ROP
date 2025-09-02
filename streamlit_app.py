@@ -38,7 +38,7 @@ from io import BytesIO
 
 # Configuration de la page
 st.set_page_config(
-    page_title="Route Optique Pro",
+    page_title="Route Optique ICT",
     page_icon="🔌",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -723,7 +723,7 @@ def main():
                             pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
                             
                             # Récupérer tube et fibre du PBO extrémité  
-                            pbo_tube, pbo_fibre = get_pbo_tube_fiber(row)
+                            pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, df)
                             
                             # Construire l'identifiant
                             base_id = f"{tiroir}P{pos}"
