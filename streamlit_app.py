@@ -80,62 +80,213 @@ def get_status_class(status):
         return "status-error"
     return "status-warning"
 
+def get_tube_fiber_color(number):
+    """Retourne la couleur selon le modulo 12 pour tubes et fibres"""
+    colors = [
+        '#dc2626',  # rouge
+        '#2563eb',  # bleu  
+        '#16a34a',  # vert
+        '#eab308',  # jaune
+        '#9333ea',  # violet
+        '#ffffff',  # blanc
+        '#ea580c',  # orange
+        '#6b7280',  # gris
+        '#92400e',  # marron
+        '#000000',  # noir
+        '#0891b2',  # turquoise
+        '#ec4899'   # rose
+    ]
+    
+    if not number or number == '' or pd.isna(number):
+        return '#9ca3af'  # gris par défaut
+    
+    try:
+        num = int(float(str(number)))
+        if num <= 0:
+            return '#9ca3af'
+        index = (num - 1) % 12
+        return colors[index]
+    except:
+        return '#9ca3af'
+
+def get_text_color(bg_color):
+    """Retourne noir ou blanc selon la couleur de fond"""
+    if bg_color in ['#ffffff', '#eab308']:  # blanc et jaune
+        return '#000000'
+    return '#ffffff'
+
 def extract_route_segments(row):
-    """Extrait les segments de route d'une ligne"""
+    """Extrait les segments de route d'une ligne avec détection automatique"""
     segments = []
     
-    # Segment 1 (colonnes 9-17)
-    if len(row) > 9 and pd.notna(row.iloc[9]):
-        segment1 = {
-            'title': '🔌 Segment 1',
-            'cable': row.iloc[9] if len(row) > 9 else '',
-            'capacite': row.iloc[11] if len(row) > 11 else '',
-            'tube': row.iloc[12] if len(row) > 12 else '',
-            'fibre': row.iloc[13] if len(row) > 13 else '',
-            'boite': row.iloc[14] if len(row) > 14 else '',
-            'etat': row.iloc[17] if len(row) > 17 else ''
-        }
-        segments.append(segment1)
+    # Détecter automatiquement tous les segments jusqu'à la dernière colonne "STOCKEE"
+    current_index = 9  # Commencer à la colonne 9 comme avant
+    segment_number = 1
     
-    # Segment 2 (colonnes 18-26)  
-    if len(row) > 18 and pd.notna(row.iloc[18]):
-        segment2 = {
-            'title': '⚡ Segment 2',
-            'cable': row.iloc[18] if len(row) > 18 else '',
-            'capacite': row.iloc[20] if len(row) > 20 else '',
-            'tube': row.iloc[21] if len(row) > 21 else '',
-            'fibre': row.iloc[22] if len(row) > 22 else '',
-            'boite': row.iloc[23] if len(row) > 23 else '',
-            'etat': row.iloc[26] if len(row) > 26 else ''
-        }
-        segments.append(segment2)
+    while current_index < len(row):
+        # Chercher un câble à cette position
+        if current_index < len(row) and row.iloc[current_index] and pd.notna(row.iloc[current_index]) and str(row.iloc[current_index]).strip():
+            cable = str(row.iloc[current_index]).strip()
+            capacite = str(row.iloc[current_index + 2]).strip() if current_index + 2 < len(row) and pd.notna(row.iloc[current_index + 2]) else ''
+            tube = str(row.iloc[current_index + 3]).strip() if current_index + 3 < len(row) and pd.notna(row.iloc[current_index + 3]) else ''
+            fibre = str(row.iloc[current_index + 4]).strip() if current_index + 4 < len(row) and pd.notna(row.iloc[current_index + 4]) else ''
+            boite = str(row.iloc[current_index + 5]).strip() if current_index + 5 < len(row) and pd.notna(row.iloc[current_index + 5]) else ''
+            
+            # Chercher l'état dans les colonnes suivantes (jusqu'à 10 colonnes après)
+            etat = ''
+            for i in range(current_index + 6, min(current_index + 16, len(row))):
+                if i < len(row) and pd.notna(row.iloc[i]):
+                    cell_value = str(row.iloc[i]).strip().upper()
+                    if cell_value in ['STOCKEE', 'EN PASSAGE', 'EPISSUREE', 'OK', 'NOK']:
+                        etat = cell_value
+                        break
+            
+            segment = {
+                'title': f'Segment {segment_number}',
+                'cable': cable,
+                'capacite': capacite,
+                'tube': tube,
+                'fibre': fibre,
+                'boite': boite,
+                'etat': etat
+            }
+            segments.append(segment)
+            
+            segment_number += 1
+            current_index += 9  # Passer au segment suivant (approximation)
+        else:
+            current_index += 1
         
+        # Limite de sécurité pour éviter boucle infinie
+        if segment_number > 10:
+            break
+    
     return segments
 
-def display_segment(segment, index):
-    """Affiche un segment de route"""
-    st.markdown(f"""
-    <div class="segment-card">
-        <h4>{segment['title']}</h4>
-    </div>
-    """, unsafe_allow_html=True)
+def get_pbo_tube_fiber(row):
+    """Récupère le tube et fibre du PBO extrémité (premier segment)"""
+    if len(row) > 12 and pd.notna(row.iloc[12]):  # Tube première position
+        tube = str(row.iloc[12]).strip()
+    else:
+        tube = ''
+        
+    if len(row) > 13 and pd.notna(row.iloc[13]):  # Fibre première position  
+        fibre = str(row.iloc[13]).strip()
+    else:
+        fibre = ''
     
-    col1, col2, col3 = st.columns(3)
+    return tube, fibre
+
+def display_segment(segment, index):
+    """Affiche un segment de route sans titre"""
+    
+    col1, col2, col3 = st.columns([3, 2, 2])
+    
     with col1:
         if segment['cable']:
-            st.metric("🔌 Câble", str(segment['cable'])[:20] + "..." if len(str(segment['cable'])) > 20 else str(segment['cable']))
-        if segment['tube']:
-            st.metric("🔧 Tube", segment['tube'])
+            cable_capacite = f"{segment['cable']}_{segment['capacite']}" if segment['capacite'] else segment['cable']
+            st.metric("🔌 Câble_Capacité", cable_capacite[:30] + "..." if len(cable_capacite) > 30 else cable_capacite)
+        if segment['boite']:
+            st.metric("📦 Boîte", str(segment['boite'])[:20] + "..." if len(str(segment['boite'])) > 20 else str(segment['boite']))
     
     with col2:
-        if segment['capacite']:
-            st.metric("📊 Capacité", segment['capacite'])
-        if segment['fibre']:
-            st.metric("💡 Fibre", segment['fibre'])
+        # Tube et Fibre collés ensemble avec couleurs
+        if segment['tube'] or segment['fibre']:
+            tube_num = segment['tube'] if segment['tube'] else ''
+            fibre_num = segment['fibre'] if segment['fibre'] else ''
+            
+            if tube_num and fibre_num:
+                try:
+                    tube_int = int(float(tube_num))
+                    fibre_int = int(float(fibre_num))
+                    
+                    tube_color = get_tube_fiber_color(tube_int)
+                    tube_text_color = get_text_color(tube_color)
+                    fibre_color = get_tube_fiber_color(fibre_int)  
+                    fibre_text_color = get_text_color(fibre_color)
+                    
+                    st.markdown(f"""
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; font-weight: 500;">🔧💡 Tube-Fibre</div>
+                        <div style="display: flex; gap: 0.25rem; align-items: center;">
+                            <div style="
+                                background-color: {tube_color}; 
+                                color: {tube_text_color}; 
+                                padding: 0.5rem 0.75rem; 
+                                border-radius: 0.5rem; 
+                                font-weight: bold; 
+                                font-size: 0.875rem;
+                                border: 2px solid {tube_color};
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            ">T{tube_int}</div>
+                            <div style="
+                                background-color: {fibre_color}; 
+                                color: {fibre_text_color}; 
+                                padding: 0.5rem 0.75rem; 
+                                border-radius: 0.5rem; 
+                                font-weight: bold; 
+                                font-size: 0.875rem;
+                                border: 2px solid {fibre_color};
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            ">F{fibre_int}</div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                except ValueError:
+                    st.metric("🔧💡 Tube-Fibre", f"T{tube_num}F{fibre_num}")
+            elif tube_num:
+                try:
+                    tube_int = int(float(tube_num))
+                    tube_color = get_tube_fiber_color(tube_int)
+                    tube_text_color = get_text_color(tube_color)
+                    
+                    st.markdown(f"""
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; font-weight: 500;">🔧 Tube</div>
+                        <div style="
+                            background-color: {tube_color}; 
+                            color: {tube_text_color}; 
+                            padding: 0.5rem 0.75rem; 
+                            border-radius: 0.5rem; 
+                            font-weight: bold; 
+                            font-size: 0.875rem;
+                            display: inline-block;
+                            border: 2px solid {tube_color};
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        ">T{tube_int}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                except ValueError:
+                    st.metric("🔧 Tube", f"T{tube_num}")
+            elif fibre_num:
+                try:
+                    fibre_int = int(float(fibre_num))
+                    fibre_color = get_tube_fiber_color(fibre_int)
+                    fibre_text_color = get_text_color(fibre_color)
+                    
+                    st.markdown(f"""
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; font-weight: 500;">💡 Fibre</div>
+                        <div style="
+                            background-color: {fibre_color}; 
+                            color: {fibre_text_color}; 
+                            padding: 0.5rem 0.75rem; 
+                            border-radius: 0.5rem; 
+                            font-weight: bold; 
+                            font-size: 0.875rem;
+                            display: inline-block;
+                            border: 2px solid {fibre_color};
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        ">F{fibre_int}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                except ValueError:
+                    st.metric("💡 Fibre", f"F{fibre_num}")
             
     with col3:
-        if segment['boite']:
-            st.metric("📦 Boîte", str(segment['boite'])[:15] + "..." if len(str(segment['boite'])) > 15 else str(segment['boite']))
         if segment['etat']:
             status_class = get_status_class(segment['etat'])
             st.markdown(f'<span class="{status_class}">📍 {segment["etat"]}</span>', unsafe_allow_html=True)
@@ -167,13 +318,18 @@ def main():
             try:
                 # Essayer d'abord avec openpyxl (pour .xlsx)
                 df = pd.read_excel(uploaded_file, engine='openpyxl')
-            except ImportError:
+            except Exception as e1:
                 try:
                     # Fallback sur xlrd (pour .xls)
                     df = pd.read_excel(uploaded_file, engine='xlrd')
-                except ImportError:
-                    # Dernière tentative sans spécifier d'engine
-                    df = pd.read_excel(uploaded_file)
+                except Exception as e2:
+                    try:
+                        # Dernière tentative sans spécifier d'engine
+                        df = pd.read_excel(uploaded_file)
+                    except Exception as e3:
+                        st.error(f"❌ Impossible de lire le fichier Excel: {str(e3)}")
+                        st.info("💡 Vérifiez que votre fichier est un Excel valide (.xlsx ou .xls)")
+                        return
             
             st.success(f"✅ Fichier chargé avec succès ! {len(df)} lignes trouvées.")
             
@@ -203,7 +359,39 @@ def main():
                         
                         # Afficher les résultats
                         for idx, (_, row) in enumerate(results.head(10).iterrows()):
-                            with st.expander(f"📍 Ligne {row.name + 2} - {search_term} trouvé"):
+                            
+                            # Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité
+                            tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
+                            pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
+                            
+                            # Récupérer tube et fibre du PBO extrémité  
+                            pbo_tube, pbo_fibre = get_pbo_tube_fiber(row)
+                            
+                            # Construire l'identifiant
+                            base_id = f"{tiroir}P{pos}"
+                            if pbo_tube and pbo_fibre:
+                                try:
+                                    tube_int = int(float(pbo_tube))
+                                    fibre_int = int(float(pbo_fibre))
+                                    full_id = f"{base_id} - T{tube_int}F{fibre_int}"
+                                except ValueError:
+                                    full_id = f"{base_id} - T{pbo_tube}F{pbo_fibre}"
+                            elif pbo_tube:
+                                try:
+                                    tube_int = int(float(pbo_tube))
+                                    full_id = f"{base_id} - T{tube_int}"
+                                except ValueError:
+                                    full_id = f"{base_id} - T{pbo_tube}"
+                            elif pbo_fibre:
+                                try:
+                                    fibre_int = int(float(pbo_fibre))
+                                    full_id = f"{base_id} - F{fibre_int}"
+                                except ValueError:
+                                    full_id = f"{base_id} - F{pbo_fibre}"
+                            else:
+                                full_id = base_id
+                            
+                            with st.expander(f"📍 {full_id}"):
                                 
                                 # Informations générales
                                 col1, col2 = st.columns(2)
