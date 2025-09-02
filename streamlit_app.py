@@ -163,11 +163,17 @@ def main():
 
     if uploaded_file is not None:
         try:
-            # Charger le fichier Excel
-            if uploaded_file.name.endswith('.xlsx'):
+            # Charger le fichier Excel avec gestion d'erreurs améliorée
+            try:
+                # Essayer d'abord avec openpyxl (pour .xlsx)
                 df = pd.read_excel(uploaded_file, engine='openpyxl')
-            else:
-                df = pd.read_excel(uploaded_file, engine='xlrd')
+            except ImportError:
+                try:
+                    # Fallback sur xlrd (pour .xls)
+                    df = pd.read_excel(uploaded_file, engine='xlrd')
+                except ImportError:
+                    # Dernière tentative sans spécifier d'engine
+                    df = pd.read_excel(uploaded_file)
             
             st.success(f"✅ Fichier chargé avec succès ! {len(df)} lignes trouvées.")
             
@@ -245,3 +251,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# requirements.txt (créer ce fichier aussi)
+# streamlit>=1.28.0
+# pandas>=2.0.0  
+# openpyxl>=3.1.0
+# xlrd>=2.0.0
