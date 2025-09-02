@@ -1,8 +1,9 @@
-# app_improved.py - Application Route Optique avec Streamlit - Version Améliorée
+# app_final.py - Application Route Optique avec Streamlit - Version Finale
 import streamlit as st
 import pandas as pd
 import numpy as np
 from io import BytesIO
+import base64
 
 # Configuration de la page
 st.set_page_config(
@@ -12,7 +13,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS personnalisé amélioré
+def get_base64_of_bin_file(bin_file):
+    """Convertit un fichier binaire en base64"""
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# CSS personnalisé amélioré avec logo
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -27,6 +34,8 @@ st.markdown("""
         --success-color: #10b981;
         --warning-color: #f59e0b;
         --error-color: #ef4444;
+        --orange-color: #ea580c;
+        --purple-color: #9333ea;
         --background-light: #f8fafc;
         --background-white: #ffffff;
         --text-primary: #1e293b;
@@ -48,7 +57,7 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* Header amélioré */
+    /* Header amélioré avec logo */
     .app-header {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         padding: 2rem;
@@ -59,6 +68,10 @@ st.markdown("""
         box-shadow: var(--shadow-lg);
         position: relative;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
     }
     
     .app-header::before {
@@ -70,6 +83,24 @@ st.markdown("""
         bottom: 0;
         background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
         opacity: 0.3;
+    }
+    
+    .logo-container {
+        position: relative;
+        z-index: 2;
+        flex-shrink: 0;
+    }
+    
+    .logo-container img {
+        height: 80px;
+        width: auto;
+        filter: brightness(0) invert(1);
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 2;
+        text-align: left;
     }
     
     .app-header h1 {
@@ -113,45 +144,114 @@ st.markdown("""
         border: 1px solid var(--border-color);
     }
     
-    .segment-card {
+    /* Segment condensé */
+    .segment-condensed {
         background: var(--background-white);
-        padding: 1.5rem;
-        border-radius: var(--radius-lg);
-        border-left: 4px solid var(--primary-color);
-        margin: 1rem 0;
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius-md);
+        margin: 0.5rem 0;
         box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
         border: 1px solid var(--border-color);
-    }
-    
-    .segment-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
-    }
-    
-    .cable-info-card {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        padding: 1.5rem;
-        border-radius: var(--radius-lg);
-        margin: 1rem 0;
-        border: 1px solid #0ea5e9;
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .cable-name {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--primary-dark);
-        margin-bottom: 0.5rem;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.95rem;
+        font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 1rem;
+        transition: all 0.3s ease;
     }
     
-    .cable-capacity {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        font-weight: 500;
+    .segment-condensed:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+    
+    .segment-text {
+        flex: 1;
+        color: var(--text-primary);
+    }
+    
+    /* Status badges personnalisés */
+    .status-epissuree {
+        background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+        color: #9a3412;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid var(--orange-color);
+        box-shadow: var(--shadow-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .status-en-passage {
+        background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+        color: #6b21a8;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid var(--purple-color);
+        box-shadow: var(--shadow-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .status-stockee {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #166534;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid var(--success-color);
+        box-shadow: var(--shadow-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .status-ok {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #166534;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid var(--success-color);
+        box-shadow: var(--shadow-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .status-nok {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #dc2626;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid var(--error-color);
+        box-shadow: var(--shadow-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    /* Tube et fibre condensés */
+    .tube-fiber-condensed {
+        display: inline-flex;
+        gap: 0.25rem;
+        align-items: center;
+    }
+    
+    .tube-badge-small, .fiber-badge-small {
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        font-size: 0.75rem;
+        border: 1px solid;
+        min-width: 2rem;
+        text-align: center;
     }
     
     /* Boutons améliorés */
@@ -168,75 +268,6 @@ st.markdown("""
     
     .stButton > button:hover {
         transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-    }
-    
-    /* Status badges améliorés */
-    .status-success {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        color: #166534;
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        font-size: 0.875rem;
-        font-weight: 600;
-        border: 1px solid #22c55e;
-        box-shadow: var(--shadow-sm);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
-    .status-warning {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        font-size: 0.875rem;
-        font-weight: 600;
-        border: 1px solid #f59e0b;
-        box-shadow: var(--shadow-sm);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
-    .status-error {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #dc2626;
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        font-size: 0.875rem;
-        font-weight: 600;
-        border: 1px solid #ef4444;
-        box-shadow: var(--shadow-sm);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
-    /* Tube et fibre améliorés */
-    .tube-fiber-container {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-    }
-    
-    .tube-badge, .fiber-badge {
-        padding: 0.75rem 1rem;
-        border-radius: var(--radius-md);
-        font-weight: 700;
-        font-size: 0.875rem;
-        border: 2px solid;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
-        min-width: 3rem;
-        text-align: center;
-    }
-    
-    .tube-badge:hover, .fiber-badge:hover {
-        transform: scale(1.05);
         box-shadow: var(--shadow-md);
     }
     
@@ -283,13 +314,6 @@ st.markdown("""
         display: inline-block;
     }
     
-    /* Expander amélioré */
-    .streamlit-expanderHeader {
-        background: var(--background-light);
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-color);
-    }
-    
     /* Input amélioré */
     .stTextInput > div > div > input {
         border-radius: var(--radius-md);
@@ -316,33 +340,44 @@ st.markdown("""
     
     /* Responsive */
     @media (max-width: 768px) {
+        .app-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
         .app-header h1 {
             font-size: 2rem;
         }
         
-        .tube-fiber-container {
-            justify-content: center;
+        .logo-container img {
+            height: 60px;
         }
         
-        .segment-card {
-            padding: 1rem;
+        .segment-condensed {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
         }
     }
 </style>
 """, unsafe_allow_html=True)
 
-def get_status_class(status):
-    """Retourne la classe CSS selon le statut"""
+def get_status_class_condensed(status):
+    """Retourne la classe CSS selon le statut pour l'affichage condensé"""
     if not status:
-        return "status-warning"
+        return "status-en-passage"
     status_upper = str(status).upper()
-    if status_upper in ['STOCKEE', 'OK']:
-        return "status-success"
-    elif status_upper in ['EPISSUREE', 'EN PASSAGE']:
-        return "status-warning"
+    if status_upper == 'STOCKEE':
+        return "status-stockee"
+    elif status_upper == 'EPISSUREE':
+        return "status-epissuree"
+    elif status_upper == 'EN PASSAGE':
+        return "status-en-passage"
+    elif status_upper == 'OK':
+        return "status-ok"
     elif status_upper == 'NOK':
-        return "status-error"
-    return "status-warning"
+        return "status-nok"
+    return "status-en-passage"
 
 def get_tube_fiber_color(number):
     """Retourne la couleur selon le modulo 12 pour tubes et fibres"""
@@ -583,145 +618,72 @@ def format_cable_name_with_capacity(cable, capacite):
     
     return ""
 
-def display_cable_info(segment, index):
-    """Affiche les informations du câble avec nom et capacité"""
+def display_segment_condensed(segment, index):
+    """Affiche un segment de route en format condensé : Cable_Capacity|T1|F1|STATUS"""
+    
+    # Construire le nom du câble avec capacité
     cable_name = format_cable_name_with_capacity(segment['cable'], segment['capacite'])
     
+    # Construire les parties tube et fibre
+    tube_part = ""
+    fibre_part = ""
+    
+    if segment['tube']:
+        try:
+            tube_int = int(float(segment['tube']))
+            tube_part = f"T{tube_int}"
+        except ValueError:
+            tube_part = f"T{segment['tube']}"
+    
+    if segment['fibre']:
+        try:
+            fibre_int = int(float(segment['fibre']))
+            fibre_part = f"F{fibre_int}"
+        except ValueError:
+            fibre_part = f"F{segment['fibre']}"
+    
+    # Construire le texte condensé
+    parts = []
     if cable_name:
-        st.markdown(f"""
-        <div class="cable-info-card fade-in">
-            <div class="cable-name">
-                🔌 {cable_name}
-            </div>
-            <div class="cable-capacity">
-                Capacité: {segment['capacite'] if segment['capacite'] else 'N/A'} fibres
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-def display_segment(segment, index):
-    """Affiche un segment de route avec design amélioré"""
+        parts.append(cable_name)
+    if tube_part:
+        parts.append(tube_part)
+    if fibre_part:
+        parts.append(fibre_part)
     
-    st.markdown('<div class="segment-card fade-in">', unsafe_allow_html=True)
+    condensed_text = "|".join(parts) if parts else "N/A"
     
-    # Afficher les informations du câble en premier
-    display_cable_info(segment, index)
+    # Afficher avec le statut
+    status_class = get_status_class_condensed(segment['etat'])
+    status_text = segment['etat'] if segment['etat'] else "N/A"
     
-    col1, col2 = st.columns([3, 2])
-    
-    with col1:
-        # Tube et Fibre avec design amélioré
-        if segment['tube'] or segment['fibre']:
-            tube_num = segment['tube'] if segment['tube'] else ''
-            fibre_num = segment['fibre'] if segment['fibre'] else ''
-            
-            st.markdown('<div class="tube-fiber-container">', unsafe_allow_html=True)
-            
-            if tube_num and fibre_num:
-                try:
-                    tube_int = int(float(tube_num))
-                    fibre_int = int(float(fibre_num))
-                    
-                    tube_color = get_tube_fiber_color(tube_int)
-                    tube_text_color = get_text_color(tube_color)
-                    fibre_color = get_tube_fiber_color(fibre_int)  
-                    fibre_text_color = get_text_color(fibre_color)
-                    
-                    # Affichage tube-fibre amélioré
-                    st.markdown(f"""
-                    <div class="tube-badge" style="
-                        background-color: {tube_color}; 
-                        color: {tube_text_color}; 
-                        border-color: {tube_color};
-                    ">T{tube_int}</div>
-                    <div class="fiber-badge" style="
-                        background-color: {fibre_color}; 
-                        color: {fibre_text_color}; 
-                        border-color: {fibre_color};
-                    ">F{fibre_int}</div>
-                    """, unsafe_allow_html=True)
-                    
-                except ValueError:
-                    # Fallback si conversion échoue
-                    st.markdown(f"""
-                    <div class="tube-badge" style="background-color: #9ca3af; color: white; border-color: #9ca3af;">T{tube_num}</div>
-                    <div class="fiber-badge" style="background-color: #9ca3af; color: white; border-color: #9ca3af;">F{fibre_num}</div>
-                    """, unsafe_allow_html=True)
-                    
-            elif tube_num:
-                try:
-                    tube_int = int(float(tube_num))
-                    tube_color = get_tube_fiber_color(tube_int)
-                    tube_text_color = get_text_color(tube_color)
-                    
-                    st.markdown(f"""
-                    <div class="tube-badge" style="
-                        background-color: {tube_color}; 
-                        color: {tube_text_color}; 
-                        border-color: {tube_color};
-                    ">T{tube_int}</div>
-                    """, unsafe_allow_html=True)
-                    
-                except ValueError:
-                    st.markdown(f"""
-                    <div class="tube-badge" style="background-color: #9ca3af; color: white; border-color: #9ca3af;">T{tube_num}</div>
-                    """, unsafe_allow_html=True)
-                    
-            elif fibre_num:
-                try:
-                    fibre_int = int(float(fibre_num))
-                    fibre_color = get_tube_fiber_color(fibre_int)  
-                    fibre_text_color = get_text_color(fibre_color)
-                    
-                    st.markdown(f"""
-                    <div class="fiber-badge" style="
-                        background-color: {fibre_color}; 
-                        color: {fibre_text_color}; 
-                        border-color: {fibre_color};
-                    ">F{fibre_int}</div>
-                    """, unsafe_allow_html=True)
-                    
-                except ValueError:
-                    st.markdown(f"""
-                    <div class="fiber-badge" style="background-color: #9ca3af; color: white; border-color: #9ca3af;">F{fibre_num}</div>
-                    """, unsafe_allow_html=True)
-            
-            # Ajouter l'état à côté si disponible
-            if segment['etat']:
-                status_class = get_status_class(segment['etat'])
-                status_icon = "✅" if 'success' in status_class else "⚠️" if 'warning' in status_class else "❌"
-                st.markdown(f'<div class="{status_class}">{status_icon} {segment["etat"]}</div>', unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-                
-    with col2:
-        # Métrique capacité améliorée
-        if segment['capacite']:
-            try:
-                capacite_int = int(float(segment['capacite']))
-                st.markdown(f"""
-                <div class="metric-container">
-                    <div class="metric-label">⚡ Capacité</div>
-                    <div class="metric-value">{capacite_int}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except ValueError:
-                st.markdown(f"""
-                <div class="metric-container">
-                    <div class="metric-label">⚡ Capacité</div>
-                    <div class="metric-value">{segment['capacite']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="segment-condensed fade-in">
+        <div class="segment-text">{condensed_text}</div>
+        <div class="{status_class}">{status_text}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Interface principale
 def main():
-    # Header amélioré
-    st.markdown("""
+    # Header amélioré avec logo
+    try:
+        # Essayer de charger le logo
+        logo_base64 = get_base64_of_bin_file('/home/ubuntu/logo-ICT-group.png')
+        logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="ICT Group Logo">'
+    except:
+        # Fallback si le logo n'est pas trouvé
+        logo_html = '<div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔌</div>'
+    
+    st.markdown(f"""
     <div class="app-header fade-in">
-        <h1>🔌 Route Optique ICT</h1>
-        <p>Analyse avancée des infrastructures optiques avec design moderne</p>
+        <div class="logo-container">
+            {logo_html}
+        </div>
+        <div class="header-content">
+            <h1>Route Optique ICT</h1>
+            <p>Analyse avancée des infrastructures optiques avec design moderne</p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -946,15 +908,13 @@ def main():
                                         </div>
                                         """, unsafe_allow_html=True)
                                 
-                                # Extraire et afficher les segments
+                                # Extraire et afficher les segments en format condensé
                                 segments = extract_route_segments(row, df)
                                 
                                 if segments:
-                                    st.markdown("#### 🗺️ Route Détaillée")
+                                    st.markdown("#### 🗺️ Route Détaillée (Format Condensé)")
                                     for i, segment in enumerate(segments):
-                                        display_segment(segment, i)
-                                        if i < len(segments) - 1:
-                                            st.markdown("---")
+                                        display_segment_condensed(segment, i)
                                 else:
                                     st.info("ℹ️ Aucun segment de route détaillé trouvé pour cette ligne")
                                     
@@ -983,4 +943,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
