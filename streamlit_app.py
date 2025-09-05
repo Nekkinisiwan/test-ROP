@@ -660,9 +660,9 @@ def format_cable_name_with_capacity_and_length(cable, capacite, longueur):
     if longueur:
         try:
             long_int = int(float(longueur))
-            result += f"_{long_int} ml"
+            result += f"_{long_int}ml"
         except ValueError:
-            result += f"_{longueur} ml"
+            result += f"_{longueur}ml"
     
     return result
 
@@ -681,7 +681,7 @@ def display_segment_condensed_with_colors(segment, index):
     
     # 2. Séparateur
     if cable_name and (segment['boite'] or segment['tube'] or segment['fibre']):
-        elements.append('<div class="separator"> </div>')
+        elements.append('<div class="separator">|</div>')
     
     # 3. Boite
     if segment['boite']:
@@ -693,7 +693,7 @@ def display_segment_condensed_with_colors(segment, index):
         
         # Séparateur après la boite si il y a tube ou fibre
         if segment['tube'] or segment['fibre']:
-            elements.append('<div class="separator"> </div>')
+            elements.append('<div class="separator">|</div>')
     
     # 4. Tube coloré
     if segment['tube']:
@@ -720,7 +720,7 @@ def display_segment_condensed_with_colors(segment, index):
     
     # 5. Séparateur entre tube et fibre
     if segment['tube'] and segment['fibre']:
-        elements.append('<div class="separator"> </div>')
+        elements.append('<div class="separator">|</div>')
     
     # 6. Fibre colorée
     if segment['fibre']:
@@ -747,7 +747,7 @@ def display_segment_condensed_with_colors(segment, index):
     
     # 7. Séparateur avant le statut
     if (cable_name or segment['boite'] or segment['tube'] or segment['fibre']) and segment['etat']:
-        elements.append('<div class="separator"> </div>')
+        elements.append('<div class="separator">|</div>')
     
     # 8. Statut coloré
     if segment['etat']:
@@ -945,5 +945,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
