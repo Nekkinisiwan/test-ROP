@@ -683,11 +683,7 @@ def display_segment_condensed_with_colors(segment, index):
     
     # 3. Boite
     if segment['boite']:
-        group_elements.append(f"""
-        <div class="boite-badge-condensed">
-            {segment['boite']}
-        </div>
-        """)
+        group_elements.append(f'<div class="boite-badge-condensed">{segment["boite"]}</div>')
     
     # 4. Tube coloré
     if segment['tube']:
@@ -696,21 +692,15 @@ def display_segment_condensed_with_colors(segment, index):
             tube_color = get_tube_fiber_color(tube_int)
             tube_text_color = get_text_color(tube_color)
             
-            group_elements.append(f"""
-            <div class="tube-badge-condensed" style="
-                background-color: {tube_color}; 
-                color: {tube_text_color}; 
-                border-color: {tube_color};
-            ">T{tube_int}</div>
-            """)
+            group_elements.append(
+                f'<div class="tube-badge-condensed" style="background-color: {tube_color}; '
+                f'color: {tube_text_color}; border-color: {tube_color};">T{tube_int}</div>'
+            )
         except ValueError:
-            group_elements.append(f"""
-            <div class="tube-badge-condensed" style="
-                background-color: #9ca3af; 
-                color: white; 
-                border-color: #9ca3af;
-            ">T{segment['tube']}</div>
-            """)
+            group_elements.append(
+                f'<div class="tube-badge-condensed" style="background-color: #9ca3af; '
+                f'color: white; border-color: #9ca3af;">T{segment["tube"]}</div>'
+            )
     
     # 5. Fibre colorée
     if segment['fibre']:
@@ -719,21 +709,15 @@ def display_segment_condensed_with_colors(segment, index):
             fibre_color = get_tube_fiber_color(fibre_int)
             fibre_text_color = get_text_color(fibre_color)
             
-            group_elements.append(f"""
-            <div class="fiber-badge-condensed" style="
-                background-color: {fibre_color}; 
-                color: {fibre_text_color}; 
-                border-color: {fibre_color};
-            ">F{fibre_int}</div>
-            """)
+            group_elements.append(
+                f'<div class="fiber-badge-condensed" style="background-color: {fibre_color}; '
+                f'color: {fibre_text_color}; border-color: {fibre_color};">F{fibre_int}</div>'
+            )
         except ValueError:
-            group_elements.append(f"""
-            <div class="fiber-badge-condensed" style="
-                background-color: #9ca3af; 
-                color: white; 
-                border-color: #9ca3af;
-            ">F{segment['fibre']}</div>
-            """)
+            group_elements.append(
+                f'<div class="fiber-badge-condensed" style="background-color: #9ca3af; '
+                f'color: white; border-color: #9ca3af;">F{segment["fibre"]}</div>'
+            )
     
     # 6. Statut coloré
     if segment['etat']:
@@ -742,17 +726,17 @@ def display_segment_condensed_with_colors(segment, index):
     
     # Assembler le groupe d'éléments
     if group_elements:
-        group_html = f'<div class="elements-group">{"".join(group_elements)}</div>'
+        group_html = '<div class="elements-group">' + ''.join(group_elements) + '</div>'
         elements.append(group_html)
     
     # Assembler tous les éléments
     content_html = ''.join(elements)
     
-    st.markdown(f"""
-    <div class="segment-condensed fade-in">
-        {content_html}
-    </div>
-    """, unsafe_allow_html=True)
+    # Afficher avec unsafe_allow_html=True
+    st.markdown(
+        f'<div class="segment-condensed fade-in">{content_html}</div>',
+        unsafe_allow_html=True
+    )
 
 # Interface principale
 def main():
@@ -917,3 +901,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
