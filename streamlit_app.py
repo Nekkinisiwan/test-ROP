@@ -1,4 +1,4 @@
-# app_final_v3.py - Application Route Optique avec Streamlit - Version avec modifications demandées
+# app_final_v3.py - Application Route Optique avec Streamlit - Version simplifiée
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -154,7 +154,7 @@ st.markdown("""
         border: 1px solid var(--border-color);
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 1rem;
         transition: all 0.3s ease;
         flex-wrap: wrap;
     }
@@ -172,20 +172,14 @@ st.markdown("""
         flex-shrink: 0;
     }
     
-    .separator {
-        color: var(--text-secondary);
-        font-weight: bold;
-        font-size: 1rem;
+    .elements-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
     }
     
     /* Tube et fibre condensés avec couleurs */
-    .tube-fiber-condensed {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        flex-shrink: 0;
-    }
-    
     .tube-badge-condensed, .fiber-badge-condensed, .boite-badge-condensed {
         padding: 0.375rem 0.75rem;
         border-radius: var(--radius-sm);
@@ -364,7 +358,12 @@ st.markdown("""
             gap: 0.75rem;
         }
         
-        .tube-fiber-condensed {
+        .cable-name-condensed {
+            width: 100%;
+            text-align: center;
+        }
+        
+        .elements-group {
             justify-content: center;
             width: 100%;
         }
@@ -667,7 +666,7 @@ def format_cable_name_with_capacity_and_length(cable, capacite, longueur):
     return result
 
 def display_segment_condensed_with_colors(segment, index):
-    """Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml | Boite | T1 | F1 | STATUS"""
+    """Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml Boite T1 F1 STATUS"""
     
     # Construire le nom du câble avec capacité et longueur
     cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'])
@@ -679,21 +678,16 @@ def display_segment_condensed_with_colors(segment, index):
     if cable_name:
         elements.append(f'<div class="cable-name-condensed">{cable_name}</div>')
     
-    # 2. Séparateur
-    if cable_name and (segment['boite'] or segment['tube'] or segment['fibre']):
-        elements.append('<div class="separator">|</div>')
+    # 2. Groupe des autres éléments (boite, tube, fibre, statut)
+    group_elements = []
     
     # 3. Boite
     if segment['boite']:
-        elements.append(f"""
+        group_elements.append(f"""
         <div class="boite-badge-condensed">
             {segment['boite']}
         </div>
         """)
-        
-        # Séparateur après la boite si il y a tube ou fibre
-        if segment['tube'] or segment['fibre']:
-            elements.append('<div class="separator">|</div>')
     
     # 4. Tube coloré
     if segment['tube']:
@@ -702,7 +696,7 @@ def display_segment_condensed_with_colors(segment, index):
             tube_color = get_tube_fiber_color(tube_int)
             tube_text_color = get_text_color(tube_color)
             
-            elements.append(f"""
+            group_elements.append(f"""
             <div class="tube-badge-condensed" style="
                 background-color: {tube_color}; 
                 color: {tube_text_color}; 
@@ -710,7 +704,7 @@ def display_segment_condensed_with_colors(segment, index):
             ">T{tube_int}</div>
             """)
         except ValueError:
-            elements.append(f"""
+            group_elements.append(f"""
             <div class="tube-badge-condensed" style="
                 background-color: #9ca3af; 
                 color: white; 
@@ -718,18 +712,14 @@ def display_segment_condensed_with_colors(segment, index):
             ">T{segment['tube']}</div>
             """)
     
-    # 5. Séparateur entre tube et fibre
-    if segment['tube'] and segment['fibre']:
-        elements.append('<div class="separator">|</div>')
-    
-    # 6. Fibre colorée
+    # 5. Fibre colorée
     if segment['fibre']:
         try:
             fibre_int = int(float(segment['fibre']))
             fibre_color = get_tube_fiber_color(fibre_int)
             fibre_text_color = get_text_color(fibre_color)
             
-            elements.append(f"""
+            group_elements.append(f"""
             <div class="fiber-badge-condensed" style="
                 background-color: {fibre_color}; 
                 color: {fibre_text_color}; 
@@ -737,7 +727,7 @@ def display_segment_condensed_with_colors(segment, index):
             ">F{fibre_int}</div>
             """)
         except ValueError:
-            elements.append(f"""
+            group_elements.append(f"""
             <div class="fiber-badge-condensed" style="
                 background-color: #9ca3af; 
                 color: white; 
@@ -745,14 +735,15 @@ def display_segment_condensed_with_colors(segment, index):
             ">F{segment['fibre']}</div>
             """)
     
-    # 7. Séparateur avant le statut
-    if (cable_name or segment['boite'] or segment['tube'] or segment['fibre']) and segment['etat']:
-        elements.append('<div class="separator">|</div>')
-    
-    # 8. Statut coloré
+    # 6. Statut coloré
     if segment['etat']:
         status_class = get_status_class_condensed(segment['etat'])
-        elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
+        group_elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
+    
+    # Assembler le groupe d'éléments
+    if group_elements:
+        group_html = f'<div class="elements-group">{"".join(group_elements)}</div>'
+        elements.append(group_html)
     
     # Assembler tous les éléments
     content_html = ''.join(elements)
@@ -792,8 +783,7 @@ def main():
     
     uploaded_file = st.file_uploader(
         "Sélectionnez un fichier Excel (.xlsx, .xls)",
-        type=['xlsx', 'xls'],
-        help="Glissez-déposez votre fichier ici ou cliquez pour parcourir"
+        type=['xlsx', 'xls']
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -816,34 +806,21 @@ def main():
                         st.info("💡 Vérifiez que votre fichier est un Excel valide (.xlsx ou .xls)")
                         return
             
-            st.success(f"✅ Fichier chargé avec succès ! {len(df)} lignes trouvées.")
-            
-            # Interface de recherche améliorée
+            # Interface de recherche simplifiée
             st.markdown('<div class="search-container fade-in">', unsafe_allow_html=True)
-            st.markdown("### 🔍 Recherche Intelligente")
+            st.markdown("### 🔍 Recherche")
             
             col1, col2 = st.columns([3, 1])
             with col1:
                 search_term = st.text_input(
                     "",
-                    placeholder="🔍 Saisir un code, référence, ou identifiant...",
-                    help="Recherche dans toutes les colonnes du fichier"
+                    placeholder="🔍 Saisir un code, référence, ou identifiant..."
                 )
             
             with col2:
                 search_button = st.button("🔍 Rechercher", type="primary")
             
-            # Afficher quelques informations sur le fichier
-            st.caption(f"📁 Fichier: {uploaded_file.name} | Lignes: {len(df)} | Colonnes: {len(df.columns)}")
             st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Bouton pour voir toutes les colonnes
-            if st.checkbox("👁️ Voir toutes les colonnes du fichier"):
-                st.markdown("**📋 Toutes les colonnes disponibles :**")
-                cols_text = ", ".join([f"`{col}`" for col in df.columns])
-                st.markdown(cols_text)
-            
-            st.markdown("---")
             
             # Recherche
             if search_term or search_button:
@@ -933,11 +910,6 @@ def main():
                     else:
                         st.warning(f"❌ Aucun résultat trouvé pour '{search_term}'")
                         st.info("💡 Essayez avec un terme de recherche différent ou plus court")
-            
-            # Aperçu des données (optionnel)
-            with st.expander("👁️ Aperçu du fichier (premiers lignes)"):
-                st.dataframe(df.head(), use_container_width=True)
-                st.caption(f"Fichier: {uploaded_file.name} | Colonnes: {len(df.columns)} | Lignes: {len(df)}")
                 
         except Exception as e:
             st.error(f"❌ Erreur lors du chargement du fichier: {str(e)}")
