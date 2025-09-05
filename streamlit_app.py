@@ -1,4 +1,4 @@
-# app_final_v2.py - Application Route Optique avec Streamlit - Version Finale avec T et F colorés
+# app_final_v3.py - Application Route Optique avec Streamlit - Version avec modifications demandées
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -186,7 +186,7 @@ st.markdown("""
         flex-shrink: 0;
     }
     
-    .tube-badge-condensed, .fiber-badge-condensed {
+    .tube-badge-condensed, .fiber-badge-condensed, .boite-badge-condensed {
         padding: 0.375rem 0.75rem;
         border-radius: var(--radius-sm);
         font-weight: 700;
@@ -198,9 +198,15 @@ st.markdown("""
         transition: all 0.3s ease;
     }
     
-    .tube-badge-condensed:hover, .fiber-badge-condensed:hover {
+    .tube-badge-condensed:hover, .fiber-badge-condensed:hover, .boite-badge-condensed:hover {
         transform: scale(1.05);
         box-shadow: var(--shadow-md);
+    }
+    
+    .boite-badge-condensed {
+        background-color: #f3f4f6;
+        color: #374151;
+        border-color: #9ca3af;
     }
     
     /* Status badges personnalisés */
@@ -311,27 +317,6 @@ st.markdown("""
         font-size: 1.5rem;
         font-weight: 700;
         color: var(--text-primary);
-    }
-    
-    /* Colonnes détectées */
-    .column-detection {
-        background: var(--background-white);
-        padding: 1.5rem;
-        border-radius: var(--radius-lg);
-        margin: 1rem 0;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-color);
-    }
-    
-    .column-badge {
-        background: var(--primary-color);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: var(--radius-sm);
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin: 0.25rem;
-        display: inline-block;
     }
     
     /* Input amélioré */
@@ -457,15 +442,19 @@ def extract_route_segments(row, df):
     # Définir les noms possibles pour chaque type de colonne
     cable_names = ['cable', 'câble', 'Cable', 'Câble', 'CABLE', 'CÂBLE']
     capacite_names = ['capacité', 'capacite', 'Capacité', 'Capacite', 'CAPACITÉ', 'CAPACITE', 'capacity']
+    longueur_names = ['longueur', 'Longueur', 'LONGUEUR', 'length', 'Length', 'lg', 'LG']
     tube_names = ['tube', 'Tube', 'TUBE']
     fibre_names = ['fibre', 'Fibre', 'FIBRE', 'fiber', 'Fiber']
+    boite_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE', 'box', 'Box']
     etat_names = ['etat', 'état', 'Etat', 'État', 'ETAT', 'ÉTAT', 'state', 'State', 'STATUS', 'status']
     
     # Identifier toutes les colonnes de chaque type
     cable_cols = []
     capacite_cols = []
+    longueur_cols = []
     tube_cols = []
     fibre_cols = []
+    boite_cols = []
     etat_cols = []
     
     for col in df.columns:
@@ -483,6 +472,12 @@ def extract_route_segments(row, df):
                 capacite_cols.append(col)
                 break
                 
+        # Vérifier si c'est une colonne longueur
+        for long_name in longueur_names:
+            if long_name.lower() in col_lower:
+                longueur_cols.append(col)
+                break
+                
         # Vérifier si c'est une colonne tube
         for tube_name in tube_names:
             if tube_name.lower() in col_lower:
@@ -495,6 +490,12 @@ def extract_route_segments(row, df):
                 fibre_cols.append(col)
                 break
                 
+        # Vérifier si c'est une colonne boite
+        for boite_name in boite_names:
+            if boite_name.lower() in col_lower:
+                boite_cols.append(col)
+                break
+                
         # Vérifier si c'est une colonne état
         for etat_name in etat_names:
             if etat_name.lower() in col_lower:
@@ -502,13 +503,15 @@ def extract_route_segments(row, df):
                 break
     
     # Créer des segments basés sur le nombre de colonnes trouvées
-    max_segments = max(len(cable_cols), len(capacite_cols), len(tube_cols), len(fibre_cols), len(etat_cols))
+    max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols))
     
     for i in range(max_segments):
         cable = ''
         capacite = ''
+        longueur = ''
         tube = ''
         fibre = ''
+        boite = ''
         etat = ''
         
         # Récupérer les valeurs pour chaque segment
@@ -518,11 +521,17 @@ def extract_route_segments(row, df):
         if i < len(capacite_cols) and capacite_cols[i] in row.index:
             capacite = str(row[capacite_cols[i]]).strip() if pd.notna(row[capacite_cols[i]]) else ''
             
+        if i < len(longueur_cols) and longueur_cols[i] in row.index:
+            longueur = str(row[longueur_cols[i]]).strip() if pd.notna(row[longueur_cols[i]]) else ''
+            
         if i < len(tube_cols) and tube_cols[i] in row.index:
             tube = str(row[tube_cols[i]]).strip() if pd.notna(row[tube_cols[i]]) else ''
             
         if i < len(fibre_cols) and fibre_cols[i] in row.index:
             fibre = str(row[fibre_cols[i]]).strip() if pd.notna(row[fibre_cols[i]]) else ''
+            
+        if i < len(boite_cols) and boite_cols[i] in row.index:
+            boite = str(row[boite_cols[i]]).strip() if pd.notna(row[boite_cols[i]]) else ''
             
         if i < len(etat_cols) and etat_cols[i] in row.index:
             etat_val = str(row[etat_cols[i]]).strip().upper() if pd.notna(row[etat_cols[i]]) else ''
@@ -530,14 +539,15 @@ def extract_route_segments(row, df):
                 etat = etat_val
         
         # Créer un segment s'il y a au moins une valeur
-        if any([cable, capacite, tube, fibre, etat]):
+        if any([cable, capacite, longueur, tube, fibre, boite, etat]):
             segment = {
                 'title': f'Segment {i + 1}',
                 'cable': cable,
                 'capacite': capacite,
+                'longueur': longueur,
                 'tube': tube,
                 'fibre': fibre,
-                'boite': '',  # Pas utilisé dans la vue condensée
+                'boite': boite,
                 'etat': etat
             }
             segments.append(segment)
@@ -586,16 +596,16 @@ def get_tiroir_pos(row, df):
     return tiroir, pos
 
 def get_pbo_tube_fiber(row, df):
-    """Récupère le tube et fibre du PBO extrémité (dernières colonnes) par nom de colonne"""
+    """Récupère le tube et fibre du PBO extrémité (DERNIÈRES informations trouvées) par nom de colonne"""
     
-    # Chercher les dernières colonnes tube et fibre
+    # Chercher les DERNIÈRES colonnes tube et fibre
     tube_names = ['tube', 'Tube', 'TUBE']
     fibre_names = ['fibre', 'Fibre', 'FIBRE', 'fiber', 'Fiber']
     
     tube = ''
     fibre = ''
     
-    # Trouver toutes les colonnes tube et prendre la dernière
+    # Trouver la DERNIÈRE colonne tube (parcourir en sens inverse)
     tube_cols = []
     for col in df.columns:
         col_lower = col.lower().strip()
@@ -604,13 +614,13 @@ def get_pbo_tube_fiber(row, df):
                 tube_cols.append(col)
                 break
     
-    if tube_cols:
-        # Prendre la dernière colonne tube
-        last_tube_col = tube_cols[-1]
-        if last_tube_col in row.index and pd.notna(row[last_tube_col]):
-            tube = str(row[last_tube_col]).strip()
+    # Prendre la dernière colonne tube trouvée
+    for col in reversed(tube_cols):
+        if col in row.index and pd.notna(row[col]) and str(row[col]).strip():
+            tube = str(row[col]).strip()
+            break
     
-    # Trouver toutes les colonnes fibre et prendre la dernière
+    # Trouver la DERNIÈRE colonne fibre (parcourir en sens inverse)
     fibre_cols = []
     for col in df.columns:
         col_lower = col.lower().strip()
@@ -619,43 +629,48 @@ def get_pbo_tube_fiber(row, df):
                 fibre_cols.append(col)
                 break
     
-    if fibre_cols:
-        # Prendre la dernière colonne fibre
-        last_fibre_col = fibre_cols[-1]
-        if last_fibre_col in row.index and pd.notna(row[last_fibre_col]):
-            fibre = str(row[last_fibre_col]).strip()
+    # Prendre la dernière colonne fibre trouvée
+    for col in reversed(fibre_cols):
+        if col in row.index and pd.notna(row[col]) and str(row[col]).strip():
+            fibre = str(row[col]).strip()
+            break
     
     return tube, fibre
 
-def format_cable_name_with_capacity(cable, capacite):
-    """Formate le nom du câble avec sa capacité selon le format demandé"""
-    if not cable and not capacite:
+def format_cable_name_with_capacity_and_length(cable, capacite, longueur):
+    """Formate le nom du câble avec sa capacité FO et longueur ml selon le format demandé"""
+    if not cable and not capacite and not longueur:
         return ""
     
-    if cable and capacite:
-        try:
-            # Essayer de convertir la capacité en entier
-            cap_int = int(float(capacite))
-            return f"{cable}_{cap_int}"
-        except ValueError:
-            # Si la conversion échoue, utiliser la capacité telle quelle
-            return f"{cable}_{capacite}"
-    elif cable:
-        return cable
-    elif capacite:
-        try:
-            cap_int = int(float(capacite))
-            return f"Cable_{cap_int}"
-        except ValueError:
-            return f"Cable_{capacite}"
+    # Commencer par le nom du câble ou un nom par défaut
+    if cable:
+        result = cable
+    else:
+        result = "Cable"
     
-    return ""
+    # Ajouter la capacité avec FO
+    if capacite:
+        try:
+            cap_int = int(float(capacite))
+            result += f"_{cap_int}FO"
+        except ValueError:
+            result += f"_{capacite}FO"
+    
+    # Ajouter la longueur avec ml
+    if longueur:
+        try:
+            long_int = int(float(longueur))
+            result += f"_{long_int}ml"
+        except ValueError:
+            result += f"_{longueur}ml"
+    
+    return result
 
 def display_segment_condensed_with_colors(segment, index):
-    """Affiche un segment de route en format condensé avec T et F colorés : Cable_Capacity | T1 | F1 | STATUS"""
+    """Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml | Boite | T1 | F1 | STATUS"""
     
-    # Construire le nom du câble avec capacité
-    cable_name = format_cable_name_with_capacity(segment['cable'], segment['capacite'])
+    # Construire le nom du câble avec capacité et longueur
+    cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'])
     
     # Construire les éléments HTML
     elements = []
@@ -665,10 +680,22 @@ def display_segment_condensed_with_colors(segment, index):
         elements.append(f'<div class="cable-name-condensed">{cable_name}</div>')
     
     # 2. Séparateur
-    if cable_name and (segment['tube'] or segment['fibre']):
+    if cable_name and (segment['boite'] or segment['tube'] or segment['fibre']):
         elements.append('<div class="separator">|</div>')
     
-    # 3. Tube coloré
+    # 3. Boite
+    if segment['boite']:
+        elements.append(f"""
+        <div class="boite-badge-condensed">
+            {segment['boite']}
+        </div>
+        """)
+        
+        # Séparateur après la boite si il y a tube ou fibre
+        if segment['tube'] or segment['fibre']:
+            elements.append('<div class="separator">|</div>')
+    
+    # 4. Tube coloré
     if segment['tube']:
         try:
             tube_int = int(float(segment['tube']))
@@ -691,11 +718,11 @@ def display_segment_condensed_with_colors(segment, index):
             ">T{segment['tube']}</div>
             """)
     
-    # 4. Séparateur entre tube et fibre
+    # 5. Séparateur entre tube et fibre
     if segment['tube'] and segment['fibre']:
         elements.append('<div class="separator">|</div>')
     
-    # 5. Fibre colorée
+    # 6. Fibre colorée
     if segment['fibre']:
         try:
             fibre_int = int(float(segment['fibre']))
@@ -718,11 +745,11 @@ def display_segment_condensed_with_colors(segment, index):
             ">F{segment['fibre']}</div>
             """)
     
-    # 6. Séparateur avant le statut
-    if (cable_name or segment['tube'] or segment['fibre']) and segment['etat']:
+    # 7. Séparateur avant le statut
+    if (cable_name or segment['boite'] or segment['tube'] or segment['fibre']) and segment['etat']:
         elements.append('<div class="separator">|</div>')
     
-    # 7. Statut coloré
+    # 8. Statut coloré
     if segment['etat']:
         status_class = get_status_class_condensed(segment['etat'])
         elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
@@ -791,103 +818,6 @@ def main():
             
             st.success(f"✅ Fichier chargé avec succès ! {len(df)} lignes trouvées.")
             
-            # Afficher les colonnes détectées avec design amélioré
-            st.markdown('<div class="column-detection fade-in">', unsafe_allow_html=True)
-            st.markdown("**🔍 Colonnes détectées pour les routes :**")
-            
-            col1, col2, col3, col4 = st.columns(4)
-            
-            # Détecter les colonnes par type
-            tiroir_cols = []
-            pos_cols = []
-            cable_cols = []
-            capacite_cols = []
-            tube_cols = []
-            fibre_cols = []
-            etat_cols = []
-            
-            tiroir_names = ['tiroir', 'drawer']
-            pos_names = ['pos', 'position']
-            cable_names = ['cable', 'câble']
-            capacite_names = ['capacité', 'capacite', 'capacity']
-            tube_names = ['tube']
-            fibre_names = ['fibre', 'fiber']
-            etat_names = ['etat', 'état', 'state', 'status']
-            
-            for col in df.columns:
-                col_lower = col.lower().strip()
-                
-                if any(name in col_lower for name in tiroir_names):
-                    tiroir_cols.append(col)
-                elif any(name in col_lower for name in pos_names):
-                    pos_cols.append(col)
-                elif any(name in col_lower for name in cable_names):
-                    cable_cols.append(col)
-                elif any(name in col_lower for name in capacite_names):
-                    capacite_cols.append(col)
-                elif any(name in col_lower for name in tube_names):
-                    tube_cols.append(col)
-                elif any(name in col_lower for name in fibre_names):
-                    fibre_cols.append(col)
-                elif any(name in col_lower for name in etat_names):
-                    etat_cols.append(col)
-            
-            with col1:
-                if tiroir_cols:
-                    st.success(f"🏠 Tiroir: {len(tiroir_cols)} col(s)")
-                    for col in tiroir_cols[:2]:
-                        st.markdown(f'<span class="column-badge">{col}</span>', unsafe_allow_html=True)
-                else:
-                    st.info("ℹ️ Tiroir: Col 1 (défaut)")
-                    
-                if tube_cols:
-                    st.success(f"🔧 Tube: {len(tube_cols)} col(s)")
-                    for col in tube_cols[:2]:
-                        st.markdown(f'<span class="column-badge">{col}</span>', unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ Aucune colonne tube")
-            
-            with col2:
-                if pos_cols:
-                    st.success(f"📍 Position: {len(pos_cols)} col(s)")
-                    for col in pos_cols[:2]:
-                        st.markdown(f'<span class="column-badge">{col}</span>', unsafe_allow_html=True)
-                else:
-                    st.info("ℹ️ Position: Col 2 (défaut)")
-                    
-                if fibre_cols:
-                    st.success(f"💡 Fibre: {len(fibre_cols)} col(s)")
-                    for col in fibre_cols[:2]:
-                        st.markdown(f'<span class="column-badge">{col}</span>', unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ Aucune colonne fibre")
-            
-            with col3:
-                if cable_cols:
-                    st.success(f"🔌 Câble: {len(cable_cols)} col(s)")
-                    for col in cable_cols[:2]:
-                        st.markdown(f'<span class="column-badge">{col}</span>', unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ Aucune colonne câble")
-                    
-                if etat_cols:
-                    st.success(f"📊 État: {len(etat_cols)} col(s)")
-                    for col in etat_cols[:2]:
-                        st.markdown(f'<span class="column-badge">{col}</span>', unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ Aucune colonne état")
-                    
-            with col4:
-                if capacite_cols:
-                    st.success(f"⚡ Capacité: {len(capacite_cols)} col(s)")
-                    for col in capacite_cols[:2]:
-                        st.markdown(f'<span class="column-badge">{col}</span>', unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ Aucune colonne capacité")
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            st.markdown("---")
-            
             # Interface de recherche améliorée
             st.markdown('<div class="search-container fade-in">', unsafe_allow_html=True)
             st.markdown("### 🔍 Recherche Intelligente")
@@ -908,7 +838,7 @@ def main():
             st.markdown('</div>', unsafe_allow_html=True)
             
             # Bouton pour voir toutes les colonnes
-            if st.checkbox("🔍 Voir toutes les colonnes du fichier"):
+            if st.checkbox("👁️ Voir toutes les colonnes du fichier"):
                 st.markdown("**📋 Toutes les colonnes disponibles :**")
                 cols_text = ", ".join([f"`{col}`" for col in df.columns])
                 st.markdown(cols_text)
@@ -928,11 +858,11 @@ def main():
                         # Afficher les résultats
                         for idx, (_, row) in enumerate(results.head(10).iterrows()):
                             
-                            # Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité
+                            # Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité (DERNIÈRES valeurs)
                             tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
                             pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
                             
-                            # Récupérer tube et fibre du PBO extrémité  
+                            # Récupérer tube et fibre du PBO extrémité (dernières informations)
                             pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, df)
                             
                             # Construire l'identifiant
@@ -959,7 +889,7 @@ def main():
                             else:
                                 full_id = base_id
                             
-                            with st.expander(f"📍 {full_id}", expanded=False):
+                            with st.expander(f"🔍 {full_id}", expanded=False):
                                 
                                 # Informations générales avec design amélioré
                                 col1, col2 = st.columns(2)
@@ -1015,5 +945,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
