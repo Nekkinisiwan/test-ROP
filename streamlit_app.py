@@ -586,36 +586,44 @@ def get_tiroir_pos(row, df):
     return tiroir, pos
 
 def get_pbo_tube_fiber(row, df):
-    """Récupère le tube et fibre du PBO extrémité (premier segment) par nom de colonne"""
+    """Récupère le tube et fibre du PBO extrémité (dernières colonnes) par nom de colonne"""
     
-    # Chercher les premières colonnes tube et fibre
+    # Chercher les dernières colonnes tube et fibre
     tube_names = ['tube', 'Tube', 'TUBE']
     fibre_names = ['fibre', 'Fibre', 'FIBRE', 'fiber', 'Fiber']
     
     tube = ''
     fibre = ''
     
-    # Trouver la première colonne tube
+    # Trouver toutes les colonnes tube et prendre la dernière
+    tube_cols = []
     for col in df.columns:
         col_lower = col.lower().strip()
         for tube_name in tube_names:
             if tube_name.lower() in col_lower:
-                if col in row.index and pd.notna(row[col]):
-                    tube = str(row[col]).strip()
-                    break
-        if tube:
-            break
+                tube_cols.append(col)
+                break
     
-    # Trouver la première colonne fibre
+    if tube_cols:
+        # Prendre la dernière colonne tube
+        last_tube_col = tube_cols[-1]
+        if last_tube_col in row.index and pd.notna(row[last_tube_col]):
+            tube = str(row[last_tube_col]).strip()
+    
+    # Trouver toutes les colonnes fibre et prendre la dernière
+    fibre_cols = []
     for col in df.columns:
         col_lower = col.lower().strip()
         for fibre_name in fibre_names:
             if fibre_name.lower() in col_lower:
-                if col in row.index and pd.notna(row[col]):
-                    fibre = str(row[col]).strip()
-                    break
-        if fibre:
-            break
+                fibre_cols.append(col)
+                break
+    
+    if fibre_cols:
+        # Prendre la dernière colonne fibre
+        last_fibre_col = fibre_cols[-1]
+        if last_fibre_col in row.index and pd.notna(row[last_fibre_col]):
+            fibre = str(row[last_fibre_col]).strip()
     
     return tube, fibre
 
@@ -1007,4 +1015,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
