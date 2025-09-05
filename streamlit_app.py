@@ -1,4 +1,4 @@
-# app_final.py - Application Route Optique avec Streamlit - Version Finale
+# app_final_v2.py - Application Route Optique avec Streamlit - Version Finale avec T et F colorés
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -144,7 +144,7 @@ st.markdown("""
         border: 1px solid var(--border-color);
     }
     
-    /* Segment condensé */
+    /* Segment condensé avec éléments colorés */
     .segment-condensed {
         background: var(--background-white);
         padding: 1rem 1.5rem;
@@ -152,13 +152,11 @@ st.markdown("""
         margin: 0.5rem 0;
         box-shadow: var(--shadow-sm);
         border: 1px solid var(--border-color);
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        font-size: 0.95rem;
-        font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
         transition: all 0.3s ease;
+        flex-wrap: wrap;
     }
     
     .segment-condensed:hover {
@@ -166,9 +164,43 @@ st.markdown("""
         transform: translateY(-1px);
     }
     
-    .segment-text {
-        flex: 1;
+    .cable-name-condensed {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.95rem;
+        font-weight: 600;
         color: var(--text-primary);
+        flex-shrink: 0;
+    }
+    
+    .separator {
+        color: var(--text-secondary);
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    /* Tube et fibre condensés avec couleurs */
+    .tube-fiber-condensed {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .tube-badge-condensed, .fiber-badge-condensed {
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: 0.8rem;
+        border: 2px solid;
+        min-width: 2.5rem;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+    
+    .tube-badge-condensed:hover, .fiber-badge-condensed:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow-md);
     }
     
     /* Status badges personnalisés */
@@ -183,6 +215,7 @@ st.markdown("""
         box-shadow: var(--shadow-sm);
         text-transform: uppercase;
         letter-spacing: 0.025em;
+        flex-shrink: 0;
     }
     
     .status-en-passage {
@@ -196,6 +229,7 @@ st.markdown("""
         box-shadow: var(--shadow-sm);
         text-transform: uppercase;
         letter-spacing: 0.025em;
+        flex-shrink: 0;
     }
     
     .status-stockee {
@@ -209,6 +243,7 @@ st.markdown("""
         box-shadow: var(--shadow-sm);
         text-transform: uppercase;
         letter-spacing: 0.025em;
+        flex-shrink: 0;
     }
     
     .status-ok {
@@ -222,6 +257,7 @@ st.markdown("""
         box-shadow: var(--shadow-sm);
         text-transform: uppercase;
         letter-spacing: 0.025em;
+        flex-shrink: 0;
     }
     
     .status-nok {
@@ -235,23 +271,7 @@ st.markdown("""
         box-shadow: var(--shadow-sm);
         text-transform: uppercase;
         letter-spacing: 0.025em;
-    }
-    
-    /* Tube et fibre condensés */
-    .tube-fiber-condensed {
-        display: inline-flex;
-        gap: 0.25rem;
-        align-items: center;
-    }
-    
-    .tube-badge-small, .fiber-badge-small {
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--radius-sm);
-        font-weight: 600;
-        font-size: 0.75rem;
-        border: 1px solid;
-        min-width: 2rem;
-        text-align: center;
+        flex-shrink: 0;
     }
     
     /* Boutons améliorés */
@@ -356,7 +376,12 @@ st.markdown("""
         .segment-condensed {
             flex-direction: column;
             align-items: flex-start;
-            gap: 0.5rem;
+            gap: 0.75rem;
+        }
+        
+        .tube-fiber-condensed {
+            justify-content: center;
+            width: 100%;
         }
     }
 </style>
@@ -618,49 +643,88 @@ def format_cable_name_with_capacity(cable, capacite):
     
     return ""
 
-def display_segment_condensed(segment, index):
-    """Affiche un segment de route en format condensé : Cable_Capacity|T1|F1|STATUS"""
+def display_segment_condensed_with_colors(segment, index):
+    """Affiche un segment de route en format condensé avec T et F colorés : Cable_Capacity | T1 | F1 | STATUS"""
     
     # Construire le nom du câble avec capacité
     cable_name = format_cable_name_with_capacity(segment['cable'], segment['capacite'])
     
-    # Construire les parties tube et fibre
-    tube_part = ""
-    fibre_part = ""
+    # Construire les éléments HTML
+    elements = []
     
+    # 1. Nom du câble
+    if cable_name:
+        elements.append(f'<div class="cable-name-condensed">{cable_name}</div>')
+    
+    # 2. Séparateur
+    if cable_name and (segment['tube'] or segment['fibre']):
+        elements.append('<div class="separator">|</div>')
+    
+    # 3. Tube coloré
     if segment['tube']:
         try:
             tube_int = int(float(segment['tube']))
-            tube_part = f"T{tube_int}"
+            tube_color = get_tube_fiber_color(tube_int)
+            tube_text_color = get_text_color(tube_color)
+            
+            elements.append(f"""
+            <div class="tube-badge-condensed" style="
+                background-color: {tube_color}; 
+                color: {tube_text_color}; 
+                border-color: {tube_color};
+            ">T{tube_int}</div>
+            """)
         except ValueError:
-            tube_part = f"T{segment['tube']}"
+            elements.append(f"""
+            <div class="tube-badge-condensed" style="
+                background-color: #9ca3af; 
+                color: white; 
+                border-color: #9ca3af;
+            ">T{segment['tube']}</div>
+            """)
     
+    # 4. Séparateur entre tube et fibre
+    if segment['tube'] and segment['fibre']:
+        elements.append('<div class="separator">|</div>')
+    
+    # 5. Fibre colorée
     if segment['fibre']:
         try:
             fibre_int = int(float(segment['fibre']))
-            fibre_part = f"F{fibre_int}"
+            fibre_color = get_tube_fiber_color(fibre_int)
+            fibre_text_color = get_text_color(fibre_color)
+            
+            elements.append(f"""
+            <div class="fiber-badge-condensed" style="
+                background-color: {fibre_color}; 
+                color: {fibre_text_color}; 
+                border-color: {fibre_color};
+            ">F{fibre_int}</div>
+            """)
         except ValueError:
-            fibre_part = f"F{segment['fibre']}"
+            elements.append(f"""
+            <div class="fiber-badge-condensed" style="
+                background-color: #9ca3af; 
+                color: white; 
+                border-color: #9ca3af;
+            ">F{segment['fibre']}</div>
+            """)
     
-    # Construire le texte condensé
-    parts = []
-    if cable_name:
-        parts.append(cable_name)
-    if tube_part:
-        parts.append(tube_part)
-    if fibre_part:
-        parts.append(fibre_part)
+    # 6. Séparateur avant le statut
+    if (cable_name or segment['tube'] or segment['fibre']) and segment['etat']:
+        elements.append('<div class="separator">|</div>')
     
-    condensed_text = "|".join(parts) if parts else "N/A"
+    # 7. Statut coloré
+    if segment['etat']:
+        status_class = get_status_class_condensed(segment['etat'])
+        elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
     
-    # Afficher avec le statut
-    status_class = get_status_class_condensed(segment['etat'])
-    status_text = segment['etat'] if segment['etat'] else "N/A"
+    # Assembler tous les éléments
+    content_html = ''.join(elements)
     
     st.markdown(f"""
     <div class="segment-condensed fade-in">
-        <div class="segment-text">{condensed_text}</div>
-        <div class="{status_class}">{status_text}</div>
+        {content_html}
     </div>
     """, unsafe_allow_html=True)
 
@@ -668,7 +732,7 @@ def display_segment_condensed(segment, index):
 def main():
     # Header amélioré avec logo
     try:
-        # Essayer de charger le logo
+        # Essayer de charger le logo depuis la racine
         logo_base64 = get_base64_of_bin_file('logo-ICT-group.png')
         logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="ICT Group Logo">'
     except:
@@ -908,13 +972,13 @@ def main():
                                         </div>
                                         """, unsafe_allow_html=True)
                                 
-                                # Extraire et afficher les segments en format condensé
+                                # Extraire et afficher les segments en format condensé avec couleurs
                                 segments = extract_route_segments(row, df)
                                 
                                 if segments:
-                                    st.markdown("#### 🗺️ Route Détaillée (Format Condensé)")
+                                    st.markdown("#### 🗺️ Route Détaillée (Format Condensé avec Couleurs)")
                                     for i, segment in enumerate(segments):
-                                        display_segment_condensed(segment, i)
+                                        display_segment_condensed_with_colors(segment, i)
                                 else:
                                     st.info("ℹ️ Aucun segment de route détaillé trouvé pour cette ligne")
                                     
