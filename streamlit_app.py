@@ -735,7 +735,7 @@ def calculate_cumulative_lengths(segments):
 		if longueur:
 			try:
 				long_value = float(longueur)
-				cumul += long_value
+				cumul += long_value * 1.05
 				cumulative_lengths.append(cumul)
 			except ValueError:
 				# Si la longueur n'est pas numérique, on garde le cumul précédent
@@ -996,6 +996,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
