@@ -481,7 +481,7 @@ def extract_route_segments(row, df):
 				break
 				
 		# Vérifier si c'est une colonne longueur
-		if col_lower != 'Longueur Totale':
+		if 'totale' not in col_lower:
 			for long_name in longueur_names:
 				if long_name.lower() in col_lower:
 					longueur_cols.append(col)
@@ -946,6 +946,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
