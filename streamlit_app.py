@@ -476,9 +476,7 @@ def calculate_prises_count_optimized(optimized_df, boite_name):
     
     boite_name_clean = str(boite_name).strip().upper()
     
-    # Utiliser des opérations vectorisées NumPy pour la vitesse
-    import numpy as np
-    
+    # Utiliser des opérations vectorisées NumPy pour la vitesse    
     prise_array = optimized_df['PRISE_UPPER'].values
     pto_array = optimized_df['PTO_UPPER'].values
     
@@ -519,6 +517,19 @@ def calculate_prises_count(stban_df, boite_name):
 @st.cache_data(show_spinner=False)
 def load_stban_file(file_content):
     """Charge le fichier STBAN avec mise en cache"""
+    try:
+        df = pd.read_excel(file_content, engine='openpyxl')
+        return df
+    except:
+        try:
+            df = pd.read_excel(file_content, engine='xlrd')
+            return df
+        except:
+            return pd.read_excel(file_content)
+
+@st.cache_data(show_spinner=False)
+def load_rop_file(file_content):
+    """Charge le fichier ROP avec mise en cache"""
     try:
         df = pd.read_excel(file_content, engine='openpyxl')
         return df
@@ -1057,23 +1068,23 @@ def main():
 		except Exception as e:
 			st.error(f"⚠️ Erreur: {str(e)}")
 			stban_df = None
-					
+
+	rop_df = None
 	if uploaded_file is not None:
 		try:
-			# Charger le fichier Excel
-			try:
-				df = pd.read_excel(uploaded_file, engine='openpyxl')
-			except:
-				try:
-					df = pd.read_excel(uploaded_file, engine='xlrd')
-				except:
-					df = pd.read_excel(uploaded_file)
+			with st.spinner('⏳ Chargement du fichier STBAN (20 Mo)...'):
+				# Lire le contenu du fichier une fois
+				file_content = uploaded_file.read()
+				uploaded_file.seek(0)  # Remettre le pointeur au début
+				
+				# Utiliser la fonction cachée
+				rop_df = load_rop_file(file_content)
 			
 			# Extraire les valeurs uniques pour l'autocomplétion
-			all_values = get_all_unique_values(df)
+			all_values = get_all_unique_values(rop_df)
 			
 			# Extraire spécifiquement les noms de boîtes
-			boite_names = extract_boite_names_from_df(df)
+			boite_names = extract_boite_names_from_df(rop_df)
 			
 			# Interface de recherche avec autocomplétion
 			st.markdown('<div class="search-container fade-in">', unsafe_allow_html=True)
@@ -1128,14 +1139,14 @@ def main():
 					# Recherche dans toutes les colonnes
 
 					# Find boolean mask where value appears
-					mask = df == selected_value
+					mask = rop_df == selected_value
 					# Find column indices where the value exists (True)
 					column_indices = np.where(mask.any(axis=0))[0]
 
 					col_index = column_indices[0] if len(column_indices) > 0 else None
 					
-					results = df[(df.iloc[:, col_index] == selected_value) &
-					    (df.iloc[:, col_index + 3] == "STOCKEE")
+					results = rop_df[(rop_df.iloc[:, col_index] == selected_value) &
+					    (rop_df.iloc[:, col_index + 3] == "STOCKEE")
 					]
 					
 					if len(results) > 0:
@@ -1164,8 +1175,8 @@ def main():
 						for idx, (_, row) in enumerate(display_results.iterrows()):
 							
 							# Formater l'identifiant
-							tiroir, pos = get_tiroir_pos(row, df)
-							pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, df)
+							tiroir, pos = get_tiroir_pos(row, rop_df)
+							pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, rop_df)
 							
 							# Construire l'identifiant
 							base_id = f"{tiroir}P{pos}" if tiroir and pos else "N/A"
@@ -1201,7 +1212,7 @@ def main():
 										""", unsafe_allow_html=True)
 								
 								# Extraire et afficher les segments en format condensé avec couleurs
-								segments = extract_route_segments(row, df)
+								segments = extract_route_segments(row, rop_df)
 								
 								if segments:
 									st.markdown("#### 🗺️ Route Détaillée")
@@ -1221,7 +1232,7 @@ def main():
 									display_data = {}
 									for i, value in enumerate(row):
 										if pd.notna(value) and str(value).strip():
-											col_name = df.columns[i] if i < len(df.columns) else f"Col {i+1}"
+											col_name = rop_df.columns[i] if i < len(rop_df.columns) else f"Col {i+1}"
 											display_data[col_name] = value
 									
 									if display_data:
@@ -1246,6 +1257,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
