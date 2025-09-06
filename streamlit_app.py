@@ -1134,7 +1134,7 @@ def main():
 					
 						if found_column_name is None:
 							return None
-					
+					st.write(found_column_name)
 					col_index = df.columns.get_loc(found_column_name)
 					target_col_index = col_index + 2
 				
@@ -1253,5 +1253,6 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
