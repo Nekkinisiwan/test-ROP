@@ -1006,12 +1006,12 @@ def main():
 		)
 	
 	with col2:
-	stban_file = st.file_uploader(
-		"📋 Fichier Excel STBAN (optionnel)",
-		type=['xlsx', 'xls'],
-		key="stban",
-		help="Chargez le fichier STBAN pour calculer le nombre de prises"
-	)
+		stban_file = st.file_uploader(
+			"📋 Fichier Excel STBAN (optionnel)",
+			type=['xlsx', 'xls'],
+			key="stban",
+			help="Chargez le fichier STBAN pour calculer le nombre de prises"
+		)
 		
 	st.markdown('</div>', unsafe_allow_html=True)
 	
@@ -1281,6 +1281,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
