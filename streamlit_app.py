@@ -206,7 +206,6 @@ st.markdown("""
 	.k7-badge-condensed {
         background-color: #000000;
         color: #ffffff;
-		border-color: #000000;
         padding: 0.375rem 0.75rem;
         border-radius: var(--radius-sm);
         font-weight: 700;
@@ -524,25 +523,30 @@ def extract_route_segments(row, df):
 			if etat_name.lower() in col_lower:
 				etat_cols.append(col)
 				break
-
-	if df.iloc[0,2] == "k7" or df.iloc[0,3] == "k7" or df.iloc[0,4] == "k7" :
-		for col in df.columns[5:]:
-			col_lower = col.lower().strip()
-			# Vérifier si c'est une colonne K7
-			for k7_name in k7_names:
+		
+		for k7_name in k7_names:
 				if k7_name.lower() in col_lower:
 					k7_cols.append(col)
 					break
-			break
-	else :
-		for col in df.columns[1:]:
-			col_lower = col.lower().strip()
+					
+	#if df.iloc[0,2] == "k7" or df.iloc[0,3] == "k7" or df.iloc[0,4] == "k7" :
+		#for col in df.columns[5:]:
+			#col_lower = col.lower().strip()
 			# Vérifier si c'est une colonne K7
-			for k7_name in k7_names:
-				if k7_name.lower() in col_lower:
-					k7_cols.append(col)
-					break
-			break
+			#for k7_name in k7_names:
+				#if k7_name.lower() in col_lower:
+					#k7_cols.append(col)
+					#break
+			#break
+	#else :
+		#for col in df.columns[1:]:
+			#col_lower = col.lower().strip()
+			# Vérifier si c'est une colonne K7
+			#for k7_name in k7_names:
+				#if k7_name.lower() in col_lower:
+					#k7_cols.append(col)
+					#break
+			#break
 				
 	# Créer des segments basés sur le nombre de colonnes trouvées
 	max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), 
@@ -962,6 +966,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
