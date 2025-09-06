@@ -435,83 +435,83 @@ def find_column_by_name(df, possible_names):
     return None
 
 def extract_route_segments(row, df):
-    """Extrait les segments de route d'une ligne en se basant sur les noms d'entêtes"""
-    segments = []
-    
-    # Définir les noms possibles pour chaque type de colonne
-    cable_names = ['cable', 'câble', 'Cable', 'Câble', 'CABLE', 'CÂBLE']
-    capacite_names = ['capacité', 'capacite', 'Capacité', 'Capacite', 'CAPACITÉ', 'CAPACITE', 'capacity']
-    longueur_names = ['longueur', 'Longueur', 'LONGUEUR', 'length', 'Length', 'lg', 'LG']
-    tube_names = ['tube', 'Tube', 'TUBE']
-    fibre_names = ['fibre', 'Fibre', 'FIBRE', 'fiber', 'Fiber']
-    boite_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE', 'box', 'Box']
-    etat_names = ['etat', 'état', 'Etat', 'État', 'ETAT', 'ÉTAT', 'state', 'State', 'STATUS', 'status']
-    k7_names = ['k7', 'K7', 'Cassette', 'CASSETTE', 'cassette']
-	
-    # Identifier toutes les colonnes de chaque type
-    cable_cols = []
-    capacite_cols = []
-    longueur_cols = []
-    tube_cols = []
-    fibre_cols = []
-    boite_cols = []
-    etat_cols = []
-    k7_cols = []
-	
-    for col in df.columns:
-        col_lower = col.lower().strip()
-        
-        # Vérifier si c'est une colonne câble
-        for cable_name in cable_names:
-            if cable_name.lower() in col_lower:
-                cable_cols.append(col)
-                break
-                
-        # Vérifier si c'est une colonne capacité
-        for cap_name in capacite_names:
-            if cap_name.lower() in col_lower:
-                capacite_cols.append(col)
-                break
-                
-        # Vérifier si c'est une colonne longueur
-        for long_name in longueur_names:
-            if long_name.lower() in col_lower:
-                longueur_cols.append(col)
-                break
-                
-        # Vérifier si c'est une colonne tube
-        for tube_name in tube_names:
-            if tube_name.lower() in col_lower:
-                tube_cols.append(col)
-                break
-                
-        # Vérifier si c'est une colonne fibre
-        for fibre_name in fibre_names:
-            if fibre_name.lower() in col_lower:
-                fibre_cols.append(col)
-                break
-                
-        # Vérifier si c'est une colonne boite
-        for boite_name in boite_names:
-            if boite_name.lower() in col_lower:
-                boite_cols.append(col)
-                break
-                
-        # Vérifier si c'est une colonne état
-        for etat_name in etat_names:
-            if etat_name.lower() in col_lower:
-                etat_cols.append(col)
-                break
+	"""Extrait les segments de route d'une ligne en se basant sur les noms d'entêtes"""
+	segments = []
+
+	# Définir les noms possibles pour chaque type de colonne
+	cable_names = ['cable', 'câble', 'Cable', 'Câble', 'CABLE', 'CÂBLE']
+	capacite_names = ['capacité', 'capacite', 'Capacité', 'Capacite', 'CAPACITÉ', 'CAPACITE', 'capacity']
+	longueur_names = ['longueur', 'Longueur', 'LONGUEUR', 'length', 'Length', 'lg', 'LG']
+	tube_names = ['tube', 'Tube', 'TUBE']
+	fibre_names = ['fibre', 'Fibre', 'FIBRE', 'fiber', 'Fiber']
+	boite_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE', 'box', 'Box']
+	etat_names = ['etat', 'état', 'Etat', 'État', 'ETAT', 'ÉTAT', 'state', 'State', 'STATUS', 'status']
+	k7_names = ['k7', 'K7', 'Cassette', 'CASSETTE', 'cassette']
+
+	# Identifier toutes les colonnes de chaque type
+	cable_cols = []
+	capacite_cols = []
+	longueur_cols = []
+	tube_cols = []
+	fibre_cols = []
+	boite_cols = []
+	etat_cols = []
+	k7_cols = []
+
+	for col in df.columns:
+		col_lower = col.lower().strip()
+		
+		# Vérifier si c'est une colonne câble
+		for cable_name in cable_names:
+			if cable_name.lower() in col_lower:
+				cable_cols.append(col)
+				break
+				
+		# Vérifier si c'est une colonne capacité
+		for cap_name in capacite_names:
+			if cap_name.lower() in col_lower:
+				capacite_cols.append(col)
+				break
+				
+		# Vérifier si c'est une colonne longueur
+		for long_name in longueur_names:
+			if long_name.lower() in col_lower:
+				longueur_cols.append(col)
+				break
+				
+		# Vérifier si c'est une colonne tube
+		for tube_name in tube_names:
+			if tube_name.lower() in col_lower:
+				tube_cols.append(col)
+				break
+				
+		# Vérifier si c'est une colonne fibre
+		for fibre_name in fibre_names:
+			if fibre_name.lower() in col_lower:
+				fibre_cols.append(col)
+				break
+				
+		# Vérifier si c'est une colonne boite
+		for boite_name in boite_names:
+			if boite_name.lower() in col_lower:
+				boite_cols.append(col)
+				break
+				
+		# Vérifier si c'est une colonne état
+		for etat_name in etat_names:
+			if etat_name.lower() in col_lower:
+				etat_cols.append(col)
+				break
 		
 		# Vérifier si c'est une colonne K7
-        for k7_name in k7_names:
-            if k7_name.lower() in col_lower:
-                k7_cols.append(col)
-                break
+		for k7_name in k7_names:
+			if k7_name.lower() in col_lower:
+				k7_cols.append(col)
+				break
 				
-    # Créer des segments basés sur le nombre de colonnes trouvées
-    max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols), len(k7_cols))
-    
+	# Créer des segments basés sur le nombre de colonnes trouvées
+	max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols), len(k7_cols))
+
 	for i in range(max_segments):
 		cable = ''
 		capacite = ''
