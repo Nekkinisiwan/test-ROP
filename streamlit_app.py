@@ -511,7 +511,7 @@ def extract_route_segments(row, df):
 				etat_cols.append(col)
 				break
 
-	if df.iloc[0, 2] == 'k7' :
+	if df.iloc[0,2] == "k7" or df.iloc[0,3] == "k7" or df.iloc[0,4] == "k7" :
 		for col in df.columns[5:]:
 			col_lower = col.lower().strip()
 			# Vérifier si c'est une colonne K7
@@ -861,7 +861,7 @@ def main():
 						st.markdown(f"### 📋 {len(results)} résultat(s) trouvé(s)")
 						
 						# Afficher les résultats
-						for idx, (_, row) in enumerate(results.head(10).iterrows()):
+						for idx, (_, row) in enumerate(results.iterrows()):
 							
 							# Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité (DERNIÈRES valeurs)
 							# tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
@@ -946,6 +946,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
