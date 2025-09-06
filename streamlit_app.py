@@ -446,7 +446,8 @@ def extract_route_segments(row, df):
     fibre_names = ['fibre', 'Fibre', 'FIBRE', 'fiber', 'Fiber']
     boite_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE', 'box', 'Box']
     etat_names = ['etat', 'état', 'Etat', 'État', 'ETAT', 'ÉTAT', 'state', 'State', 'STATUS', 'status']
-    
+    k7_names = ['k7', 'K7', 'Cassette', 'CASSETTE', 'cassette']
+	
     # Identifier toutes les colonnes de chaque type
     cable_cols = []
     capacite_cols = []
@@ -455,7 +456,8 @@ def extract_route_segments(row, df):
     fibre_cols = []
     boite_cols = []
     etat_cols = []
-    
+    k7_cols = []
+	
     for col in df.columns:
         col_lower = col.lower().strip()
         
@@ -500,9 +502,15 @@ def extract_route_segments(row, df):
             if etat_name.lower() in col_lower:
                 etat_cols.append(col)
                 break
-    
+		
+		# Vérifier si c'est une colonne K7
+        for k7_name in k7_names:
+            if k7_name.lower() in col_lower:
+                k7_cols.append(col)
+                break
+				
     # Créer des segments basés sur le nombre de colonnes trouvées
-    max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols))
+    max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols), len(k7_cols))
     
     for i in range(max_segments):
         cable = ''
@@ -512,7 +520,8 @@ def extract_route_segments(row, df):
         fibre = ''
         boite = ''
         etat = ''
-        
+        k7 = ''
+		
         # Récupérer les valeurs pour chaque segment
         if i < len(cable_cols) and cable_cols[i] in row.index:
             cable = str(row[cable_cols[i]]).strip() if pd.notna(row[cable_cols[i]]) else ''
@@ -537,8 +546,11 @@ def extract_route_segments(row, df):
             if etat_val in ['STOCKEE', 'EN PASSAGE', 'EPISSUREE', 'OK', 'NOK']:
                 etat = etat_val
         
+		if i < len(k7_cols) and k7_cols[i] in row.index:
+            k7 = str(row[k7_cols[i]]).strip() if pd.notna(row[k7_cols[i]]) else ''
+			
         # Créer un segment s'il y a au moins une valeur
-        if any([cable, capacite, longueur, tube, fibre, boite, etat]):
+        if any([cable, capacite, longueur, tube, fibre, boite, etat, k7]):
             segment = {
                 'title': f'Segment {i + 1}',
                 'cable': cable,
@@ -547,7 +559,8 @@ def extract_route_segments(row, df):
                 'tube': tube,
                 'fibre': fibre,
                 'boite': boite,
-                'etat': etat
+                'etat': etat,
+				'k7': k7
             }
             segments.append(segment)
     
@@ -564,16 +577,20 @@ def get_tiroir_pos(row, df):
     pos = ''
     
     # Chercher tiroir par nom
-    for col in df.columns:
-        col_lower = col.lower().strip()
-        for tiroir_name in tiroir_names:
-            if tiroir_name.lower() in col_lower:
-                if col in row.index and pd.notna(row[col]):
-                    tiroir = str(row[col]).strip()
-                    break
-        if tiroir:
-            break
-    
+    # for col in df.columns:
+        # col_lower = col.lower().strip()
+        # for tiroir_name in tiroir_names:
+            # if tiroir_name.lower() in col_lower:
+                # if col in row.index and pd.notna(row[col]):
+                    # tiroir = str(row[col]).strip()
+                    # break
+        # if tiroir:
+            # break
+    tiroir = str(row[0]).strip()
+	
+	if len(tiroir) > 5 :
+		tiroir = "TI" + str(tiroir[-9:][:2])
+	
     # Chercher position par nom  
     for col in df.columns:
         col_lower = col.lower().strip()
@@ -756,7 +773,7 @@ def main():
         </div>
         <div class="header-content">
             <h1>Route Optique ICT</h1>
-            <p>Analyse avancée des infrastructures optiques avec design moderne</p>
+            <p>Analyse avancée des infrastructures optiques</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -901,4 +918,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
