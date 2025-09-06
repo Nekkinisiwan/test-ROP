@@ -969,33 +969,33 @@ def main():
 	st.markdown('</div>', unsafe_allow_html=True)
 	
 	# Charger le fichier STBAN si fourni
-stban_df = None
-if stban_file is not None:
-    try:
-        # Charger le fichier Excel STBAN
-        try:
-            stban_df = pd.read_excel(stban_file, engine='openpyxl')
-        except:
-            try:
-                stban_df = pd.read_excel(stban_file, engine='xlrd')
-            except:
-                stban_df = pd.read_excel(stban_file)
-        
-        if stban_df is not None and len(stban_df) > 0:
-            st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes)")
-            
-            # Vérification rapide des colonnes
-            prise_found = any('PRISE' in col.upper() for col in stban_df.columns)
-            pto_found = any('PTO' in col.upper() for col in stban_df.columns)
-            
-            if not prise_found or not pto_found:
-                st.warning("⚠️ Colonnes PRISE et/ou PTO non détectées. Le calcul des prises pourrait ne pas fonctionner.")
-                with st.expander("📊 Voir les colonnes disponibles"):
-                    st.write(list(stban_df.columns))
-    
-    except Exception as e:
-        st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
-        stban_df = None
+	stban_df = None
+	if stban_file is not None:
+	try:
+		# Charger le fichier Excel STBAN
+		try:
+			stban_df = pd.read_excel(stban_file, engine='openpyxl')
+		except:
+			try:
+				stban_df = pd.read_excel(stban_file, engine='xlrd')
+			except:
+				stban_df = pd.read_excel(stban_file)
+		
+		if stban_df is not None and len(stban_df) > 0:
+			st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes)")
+			
+			# Vérification rapide des colonnes
+			prise_found = any('PRISE' in col.upper() for col in stban_df.columns)
+			pto_found = any('PTO' in col.upper() for col in stban_df.columns)
+			
+			if not prise_found or not pto_found:
+				st.warning("⚠️ Colonnes PRISE et/ou PTO non détectées. Le calcul des prises pourrait ne pas fonctionner.")
+				with st.expander("📊 Voir les colonnes disponibles"):
+					st.write(list(stban_df.columns))
+	
+	except Exception as e:
+		st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
+		stban_df = None
 					
 	if uploaded_file is not None:
 		try:
@@ -1135,7 +1135,7 @@ if stban_file is not None:
 								
 								if segments:
 									st.markdown("#### 🗺️ Route Détaillée")
-
+	
 									# Calculer les cumuls de longueurs
 									cumulative_lengths = calculate_cumulative_lengths(segments)
 									#st.write(cumulative_lengths)
@@ -1176,6 +1176,7 @@ if stban_file is not None:
 		
 if __name__ == "__main__":
     main()
+
 
 
 
