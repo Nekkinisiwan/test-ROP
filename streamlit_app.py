@@ -203,6 +203,11 @@ st.markdown("""
         border-color: #9ca3af;
     }
     
+	.k7-badge-condensed {
+        background-color: #000000;
+        color: #ffffff;
+    }
+	
     /* Status badges personnalisés */
     .status-epissuree {
         background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
@@ -458,6 +463,7 @@ def extract_route_segments(row, df):
 	etat_cols = []
 	k7_cols = []
 
+
 	for col in df.columns[1:]:
 		col_lower = col.lower().strip()
 		
@@ -502,12 +508,25 @@ def extract_route_segments(row, df):
 			if etat_name.lower() in col_lower:
 				etat_cols.append(col)
 				break
-		
-		# Vérifier si c'est une colonne K7
-		for k7_name in k7_names:
-			if k7_name.lower() in col_lower:
-				k7_cols.append(col)
-				break
+
+	if df.iloc[0, 2] == 'k7' :
+		for col in df.columns[5:]:
+			col_lower = col.lower().strip()
+			# Vérifier si c'est une colonne K7
+			for k7_name in k7_names:
+				if k7_name.lower() in col_lower:
+					k7_cols.append(col)
+					break
+			break
+	else :
+		for col in df.columns[1:]:
+			col_lower = col.lower().strip()
+			# Vérifier si c'est une colonne K7
+			for k7_name in k7_names:
+				if k7_name.lower() in col_lower:
+					k7_cols.append(col)
+					break
+			break
 				
 	# Créer des segments basés sur le nombre de colonnes trouvées
 	max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols), len(k7_cols))
@@ -739,7 +758,7 @@ def display_segment_condensed_with_colors(segment, index):
 	# 6. Statut coloré
 	if segment['etat']:
 		status_class = get_status_class_condensed(segment['etat'])
-		group_elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
+		group_elements.append(f'<div class="boite-badge-condensed">{segment["etat"]}</div>')
 
 	# 7. K7
 	if segment['k7']:
@@ -890,7 +909,7 @@ def main():
 										st.markdown(f"""
 										<div class="metric-container">
 											<div class="metric-label">📍 Position</div>
-											<div class="metric-value">{pos}div>
+											<div class="metric-value">{pos}</div>
 										</div>
 										""", unsafe_allow_html=True)
 								
@@ -898,11 +917,11 @@ def main():
 								segments = extract_route_segments(row, df)
 								
 								if segments:
-									st.markdown("#### 🗺️ Route Détaillée (Format Condensé avec Couleurs)")
+									st.markdown("#### 🗺️ Route Détaillée")
 									for i, segment in enumerate(segments):
 										display_segment_condensed_with_colors(segment, i)
 								else:
-									st.info("ℹ️ Aucun segment de route détaillé trouvé pour cette ligne")
+									st.info("ℹ️ Aucun segment de route détaillée trouvé pour cette ligne")
 									
 									# Afficher les données brutes si pas de segments
 									st.markdown("**📄 Données de la ligne :**")
