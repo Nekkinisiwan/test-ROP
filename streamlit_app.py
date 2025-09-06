@@ -450,7 +450,16 @@ def calculate_prises_count(stban_df, boite_name):
     required_cols = ['REF_PBO_PRISE', 'REF_PBO_PTO']
     for col in required_cols:
         if col not in stban_df.columns:
-            return None
+            # Essayer avec des variantes
+            col_variants = [col.lower(), col.upper(), col.title()]
+            found = False
+            for variant in col_variants:
+                if variant in stban_df.columns:
+                    stban_df[col] = stban_df[variant]
+                    found = True
+                    break
+            if not found:
+                return None
     
     # Créer des copies des colonnes en majuscules pour la comparaison
     stban_df['REF_PBO_PRISE_UPPER'] = stban_df['REF_PBO_PRISE'].fillna('').astype(str).str.strip().str.upper()
@@ -935,7 +944,7 @@ def main():
 	</div>
 	""", unsafe_allow_html=True)
 	
-	# Upload de fichier avec design amélioré
+	# Upload des fichiers
 	st.markdown('<div class="upload-container fade-in">', unsafe_allow_html=True)
 	st.markdown("### 📊 Charger vos fichiers")
 
@@ -1055,8 +1064,7 @@ def main():
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
 						results_title = f"### 📋 {len(results)} résultat(s) trouvé(s) pour '{selected_value}'"
-						prises_count = calculate_prises_count(stban_df, selected_value)
-						st.write(prises_count)
+
 						# Calculer le nombre de prises si STBAN est chargé et mode boîte
 						prises_count_display = ""
 						if stban_df is not None and search_mode == "🎯 Recherche par boîte":
@@ -1116,12 +1124,16 @@ def main():
 								
 								# Extraire et afficher les segments en format condensé avec couleurs
 								segments = extract_route_segments(row, df)
-
-								cumulative_lengths = []
 								
 								if segments:
 									st.markdown("#### 🗺️ Route Détaillée")
-									
+
+									# Afficher le nombre de prises pour ce résultat spécifique si en mode boîte
+									if stban_df is not None and search_mode == "🎯 Recherche par boîte" and selected_value:
+										prises_count_individual = calculate_prises_count(stban_df, selected_value)
+										if prises_count_individual is not None:
+											st.markdown(f'<div class="prises-badge">🔌 Prises pour {selected_value}: {prises_count_individual}</div>', unsafe_allow_html=True)
+
 									# Calculer les cumuls de longueurs
 									cumulative_lengths = calculate_cumulative_lengths(segments)
 									#st.write(cumulative_lengths)
@@ -1161,6 +1173,7 @@ def main():
 		st.info("👆 Veuillez charger un fichier Excel Route Optique pour commencer l'analyse")
 if __name__ == "__main__":
     main()
+
 
 
 
