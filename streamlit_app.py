@@ -567,49 +567,49 @@ def extract_route_segments(row, df):
 	return segments
 
 def get_tiroir_pos(row, df):
-    """Récupère tiroir et position par nom de colonne ou position par défaut"""
-    
-    # Chercher par noms de colonnes d'abord
-    tiroir_names = ['tiroir', 'Tiroir', 'TIROIR', 'drawer']
-    pos_names = ['pos', 'Pos', 'POS', 'position', 'Position', 'POSITION']
-    
-    tiroir = ''
-    pos = ''
-    
-    # Chercher tiroir par nom
-    # for col in df.columns:
-        # col_lower = col.lower().strip()
-        # for tiroir_name in tiroir_names:
-            # if tiroir_name.lower() in col_lower:
-                # if col in row.index and pd.notna(row[col]):
-                    # tiroir = str(row[col]).strip()
-                    # break
-        # if tiroir:
-            # break
-    tiroir = str(row[0]).strip()
-	
+	"""Récupère tiroir et position par nom de colonne ou position par défaut"""
+
+	# Chercher par noms de colonnes d'abord
+	tiroir_names = ['tiroir', 'Tiroir', 'TIROIR', 'drawer']
+	pos_names = ['pos', 'Pos', 'POS', 'position', 'Position', 'POSITION']
+
+	tiroir = ''
+	pos = ''
+
+	# Chercher tiroir par nom
+	# for col in df.columns:
+		# col_lower = col.lower().strip()
+		# for tiroir_name in tiroir_names:
+			# if tiroir_name.lower() in col_lower:
+				# if col in row.index and pd.notna(row[col]):
+					# tiroir = str(row[col]).strip()
+					# break
+		# if tiroir:
+			# break
+	tiroir = str(row[0]).strip()
+
 	if len(tiroir) > 5 :
 		tiroir = "TI" + str(tiroir[-9:][:2])
-	
-    # Chercher position par nom  
-    for col in df.columns:
-        col_lower = col.lower().strip()
-        for pos_name in pos_names:
-            if pos_name.lower() in col_lower:
-                if col in row.index and pd.notna(row[col]):
-                    pos = str(row[col]).strip()
-                    break
-        if pos:
-            break
-    
-    # Fallback sur les premières colonnes si pas trouvé par nom
-    if not tiroir and len(row) > 0 and pd.notna(row.iloc[0]):
-        tiroir = str(row.iloc[0]).strip()
-        
-    if not pos and len(row) > 1 and pd.notna(row.iloc[1]):
-        pos = str(row.iloc[1]).strip()
-    
-    return tiroir, pos
+
+	# Chercher position par nom  
+	for col in df.columns:
+		col_lower = col.lower().strip()
+		for pos_name in pos_names:
+			if pos_name.lower() in col_lower:
+				if col in row.index and pd.notna(row[col]):
+					pos = str(row[col]).strip()
+					break
+		if pos:
+			break
+
+	# Fallback sur les premières colonnes si pas trouvé par nom
+	if not tiroir and len(row) > 0 and pd.notna(row.iloc[0]):
+		tiroir = str(row.iloc[0]).strip()
+		
+	if not pos and len(row) > 1 and pd.notna(row.iloc[1]):
+		pos = str(row.iloc[1]).strip()
+
+	return tiroir, pos
 
 def get_pbo_tube_fiber(row, df):
     """Récupère le tube et fibre du PBO extrémité (DERNIÈRES informations trouvées) par nom de colonne"""
