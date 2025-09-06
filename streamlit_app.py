@@ -1055,7 +1055,8 @@ def main():
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
 						results_title = f"### 📋 {len(results)} résultat(s) trouvé(s) pour '{selected_value}'"
-						
+						prises_count = calculate_prises_count(stban_df, selected_value)
+						st.write(prises_count)
 						# Calculer le nombre de prises si STBAN est chargé et mode boîte
 						prises_count_display = ""
 						if stban_df is not None and search_mode == "🎯 Recherche par boîte":
@@ -1160,6 +1161,7 @@ def main():
 		st.info("👆 Veuillez charger un fichier Excel Route Optique pour commencer l'analyse")
 if __name__ == "__main__":
     main()
+
 
 
 
