@@ -1129,6 +1129,7 @@ def main():
 					found_column_name = None
 					for col in df.columns:
 						if df[col].astype(str).str.contains(str(selected_value)).any():
+							st.write(col)
 							found_column_name = col
 							break
 					
@@ -1253,6 +1254,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
