@@ -711,7 +711,7 @@ def format_cable_name_with_capacity_and_length(cable, capacite, longueur):
     if longueur:
         try:
             long_int = int(float(longueur))
-            result += f"_{long_int}ml"
+            result += f" / {long_int}ml"
         except ValueError:
             result += f" / {longueur}ml"
     
@@ -958,6 +958,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
