@@ -971,31 +971,31 @@ def main():
 	# Charger le fichier STBAN si fourni
 	stban_df = None
 	if stban_file is not None:
-	try:
-		# Charger le fichier Excel STBAN
 		try:
-			stban_df = pd.read_excel(stban_file, engine='openpyxl')
-		except:
+			# Charger le fichier Excel STBAN
 			try:
-				stban_df = pd.read_excel(stban_file, engine='xlrd')
+				stban_df = pd.read_excel(stban_file, engine='openpyxl')
 			except:
-				stban_df = pd.read_excel(stban_file)
+				try:
+					stban_df = pd.read_excel(stban_file, engine='xlrd')
+				except:
+					stban_df = pd.read_excel(stban_file)
+			
+			if stban_df is not None and len(stban_df) > 0:
+				st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes)")
+				
+				# Vérification rapide des colonnes
+				prise_found = any('PRISE' in col.upper() for col in stban_df.columns)
+				pto_found = any('PTO' in col.upper() for col in stban_df.columns)
+				
+				if not prise_found or not pto_found:
+					st.warning("⚠️ Colonnes PRISE et/ou PTO non détectées. Le calcul des prises pourrait ne pas fonctionner.")
+					with st.expander("📊 Voir les colonnes disponibles"):
+						st.write(list(stban_df.columns))
 		
-		if stban_df is not None and len(stban_df) > 0:
-			st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes)")
-			
-			# Vérification rapide des colonnes
-			prise_found = any('PRISE' in col.upper() for col in stban_df.columns)
-			pto_found = any('PTO' in col.upper() for col in stban_df.columns)
-			
-			if not prise_found or not pto_found:
-				st.warning("⚠️ Colonnes PRISE et/ou PTO non détectées. Le calcul des prises pourrait ne pas fonctionner.")
-				with st.expander("📊 Voir les colonnes disponibles"):
-					st.write(list(stban_df.columns))
-	
-	except Exception as e:
-		st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
-		stban_df = None
+		except Exception as e:
+			st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
+			stban_df = None
 					
 	if uploaded_file is not None:
 		try:
@@ -1176,6 +1176,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
