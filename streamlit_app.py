@@ -1126,7 +1126,34 @@ def main():
 			if (selected_value and selected_value != '') or search_button:
 				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
-					mask = df.astype(str).apply(lambda x: x.str.contains(selected_value, case=False, na=False)).any(axis=1)
+					# Convertir en chaîne pour le filtrage texte
+					df_str = df.astype(str)
+	
+					# Filtrer pour les lignes où la valeur recherchée apparaît quelque part
+					mask1 = df.astype(str).apply(lambda x: x.str.contains(selected_value, case=False, na=False)).any(axis=1)
+
+					# DataFrame filtré avec ces lignes
+					df_filtered = df[mask1]
+
+					# Trouver la première colonne où la valeur apparaît dans les lignes filtrées
+					col_index = None
+					for idx, col in enumerate(df_filtered.columns):
+					    if df_filtered[col].astype(str).str.contains(selected_value, case=False, na=False).any():
+					        col_index = idx
+					        break
+
+					# Vérifier qu'on ne dépasse pas le nombre de colonnes
+					if col_index + 2 < len(df.columns):
+					    # Condition que la cellule 2 colonnes après soit égale à "STOCKEE"
+					    mask2 = df.iloc[:, col_index + 2] == "STOCKEE"
+					else:
+					    # Par sécurité, si on dépasse, on force tout à False (aucune ligne)
+					    mask2 = pd.Series([False] * len(df))
+					
+					# Combinaison des deux masques
+					mask = mask1 & mask2
+					
+					# Application du filtre
 					results = df[mask]
 					
 					if len(results) > 0:
@@ -1237,6 +1264,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
