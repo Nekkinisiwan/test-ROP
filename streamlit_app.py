@@ -405,6 +405,34 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def get_all_unique_values(df):
+    """Extrait toutes les valeurs uniques du DataFrame pour l'autocomplétion"""
+    all_values = set()
+    for col in df.columns:
+        unique_vals = df[col].dropna().astype(str).unique()
+        all_values.update(unique_vals)
+    # Filtrer les valeurs vides et trier
+    all_values = sorted([val for val in all_values if val.strip() != ''])
+    return all_values
+
+def extract_boite_names_from_df(df):
+    """Extrait tous les noms de boîtes uniques depuis le DataFrame"""
+    boite_names = set()
+    
+    # Définir les noms possibles pour les colonnes boîte
+    boite_column_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE', 'box', 'Box']
+    
+    for col in df.columns:
+        col_lower = col.lower().strip()
+        for boite_name in boite_column_names:
+            if boite_name.lower() in col_lower:
+                # Extraire les valeurs uniques de cette colonne
+                unique_vals = df[col].dropna().astype(str).unique()
+                boite_names.update([val.strip() for val in unique_vals if val.strip() != ''])
+                break
+    
+    return sorted(list(boite_names))
+	
 def calculate_prises_count(stban_df, boite_name):
     """
     Calcule le nombre de prises selon la logique métier:
@@ -660,13 +688,6 @@ def extract_route_segments(row, df):
 	
 	return segments
 
-def get_boite_from_segments(segments):
-    """Récupère le nom de la boîte depuis les segments"""
-    for segment in segments:
-        if segment.get('boite'):
-            return segment['boite']
-    return None
-	
 def get_tiroir_pos(row, df):
 	"""Récupère tiroir et position par nom de colonne ou position par défaut"""
 
@@ -941,119 +962,137 @@ def main():
 	stban_df = None
 	if stban_file is not None:
 		try:
-			stban_df = pd.read_csv(stban_file, sep=';', encoding='utf-8')
-			st.success(f"✅ Fichier STBAN chargé avec succès ({len(stban_df)} lignes)")
+			# Essayer différents encodages et séparateurs
+			for encoding in ['utf-8', 'latin-1', 'iso-8859-1']:
+				for sep in [';', ',', '\t']:
+					try:
+						stban_df = pd.read_csv(stban_file, sep=sep, encoding=encoding)
+						if len(stban_df.columns) > 1:  # Vérifier que le séparateur est correct
+							st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes)")
+							break
+					except:
+						continue
+				if stban_df is not None:
+					break
+			
+			if stban_df is None:
+				st.error("⚠️ Impossible de lire le fichier STBAN. Vérifiez le format.")
 		except Exception as e:
-			try:
-				stban_df = pd.read_csv(stban_file, sep=',', encoding='utf-8')
-				st.success(f"✅ Fichier STBAN chargé avec succès ({len(stban_df)} lignes)")
-			except:
-				try:
-					stban_df = pd.read_csv(stban_file, sep=';', encoding='latin-1')
-					st.success(f"✅ Fichier STBAN chargé avec succès ({len(stban_df)} lignes)")
-				except:
-					st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
-					stban_df = None
+			st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
+			stban_df = None
 					
 	if uploaded_file is not None:
 		try:
-			# Charger le fichier Excel avec gestion d'erreurs améliorée
+			# Charger le fichier Excel
 			try:
-				# Essayer d'abord avec openpyxl (pour .xlsx)
 				df = pd.read_excel(uploaded_file, engine='openpyxl')
-			except Exception as e1:
+			except:
 				try:
-					# Fallback sur xlrd (pour .xls)
 					df = pd.read_excel(uploaded_file, engine='xlrd')
-				except Exception as e2:
-					try:
-						# Dernière tentative sans spécifier d'engine
-						df = pd.read_excel(uploaded_file)
-					except Exception as e3:
-						st.error(f"❌ Impossible de lire le fichier Excel: {str(e3)}")
-						st.info("💡 Vérifiez que votre fichier est un Excel valide (.xlsx ou .xls)")
-						return
+				except:
+					df = pd.read_excel(uploaded_file)
 			
-			# Interface de recherche simplifiée
+			# Extraire les valeurs uniques pour l'autocomplétion
+			all_values = get_all_unique_values(df)
+			
+			# Extraire spécifiquement les noms de boîtes
+			boite_names = extract_boite_names_from_df(df)
+			
+			# Interface de recherche avec autocomplétion
 			st.markdown('<div class="search-container fade-in">', unsafe_allow_html=True)
-			st.markdown("### 🔍 Recherche")
+			st.markdown("### 🔍 Recherche avec autocomplétion")
 			
-			col1, col2 = st.columns([3, 1])
-			with col1:
-				search_term = st.text_input(
-					"",
-					placeholder="🔍 Saisir un code, référence, ou identifiant..."
-				)
+			# Choix du mode de recherche
+			search_mode = st.radio(
+				"Mode de recherche",
+				["🎯 Recherche par boîte", "🔍 Recherche générale"],
+				horizontal=True
+			)
 			
-			with col2:
-				search_button = st.button("🔍 Rechercher", type="primary")
+			if search_mode == "🎯 Recherche par boîte":
+				# Recherche spécifique aux boîtes
+				if boite_names:
+					st.markdown('<div class="info-box">💡 Sélectionnez une boîte dans la liste pour une recherche précise</div>', unsafe_allow_html=True)
+					
+					col1, col2 = st.columns([3, 1])
+					with col1:
+						selected_value = st.selectbox(
+							"Sélectionnez ou tapez une boîte",
+							options=[''] + boite_names,
+							key="boite_search"
+						)
+					
+					with col2:
+						search_button = st.button("🔍 Rechercher", type="primary", key="btn_boite")
+				else:
+					st.warning("⚠️ Aucune colonne 'boîte' trouvée dans le fichier")
+					selected_value = None
+					search_button = False
+			else:
+				# Recherche générale avec toutes les valeurs
+				st.markdown('<div class="info-box">💡 Commencez à taper pour voir les suggestions</div>', unsafe_allow_html=True)
+				
+				col1, col2 = st.columns([3, 1])
+				with col1:
+					selected_value = st.selectbox(
+						"Rechercher une valeur",
+						options=[''] + all_values,
+						key="general_search"
+					)
+				
+				with col2:
+					search_button = st.button("🔍 Rechercher", type="primary", key="btn_general")
 			
 			st.markdown('</div>', unsafe_allow_html=True)
 			
 			# Recherche
-			if search_term or search_button:
-				if search_term:
+			if (selected_value and selected_value != '') or search_button:
+				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
 					mask = df.astype(str).apply(lambda x: x.str.contains(search_term, case=False, na=False)).any(axis=1)
 					results = df[mask]
 					
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
-						results_title = f"### 📋 {len(results)} résultat(s) trouvé(s)"
+						results_title = f"### 📋 {len(results)} résultat(s) trouvé(s) pour '{selected_value}'"
 						
-						# Calculer le nombre de prises si STBAN est chargé
+						# Calculer le nombre de prises si STBAN est chargé et mode boîte
 						prises_count_display = ""
-						if stban_df is not None:
-							# Extraire les segments de la première ligne trouvée pour obtenir le nom de la boîte
-							if len(results) > 0:
-								first_row = results.iloc[0]
-								segments = extract_route_segments(first_row, df)
-								boite_name = get_boite_from_segments(segments)
-								
-								if boite_name:
-									prises_count = calculate_prises_count(stban_df, boite_name)
-									if prises_count is not None:
-										prises_count_display = f'<span class="prises-badge">🔌 Nombre de prises: {prises_count}</span>'
+						if stban_df is not None and search_mode == "🎯 Recherche par boîte":
+							prises_count = calculate_prises_count(stban_df, selected_value)
+							if prises_count is not None:
+								prises_count_display = f'<span class="prises-badge">🔌 Nombre de prises: {prises_count}</span>'
 						
-						# Afficher le titre avec le nombre de prises si disponible
+						# Afficher le titre avec le nombre de prises
 						st.markdown(f'{results_title} {prises_count_display}', unsafe_allow_html=True)
 						
+						# Si plus de 10 résultats, permettre de limiter l'affichage
+						if len(results) > 10:
+							show_all = st.checkbox("Afficher tous les résultats", value=False)
+							display_results = results if show_all else results.head(10)
+						else:
+							display_results = results
+						
 						# Afficher les résultats
-						for idx, (_, row) in enumerate(results.iterrows()):
+						for idx, (_, row) in enumerate(display_results.iterrows()):
 							
-							# Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité (DERNIÈRES valeurs)
-							# tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
+							# Formater l'identifiant
 							tiroir, pos = get_tiroir_pos(row, df)
-							# pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
-							
-							# Récupérer tube et fibre du PBO extrémité (dernières informations)
 							pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, df)
 							
 							# Construire l'identifiant
-							base_id = f"{tiroir}P{pos}"
+							base_id = f"{tiroir}P{pos}" if tiroir and pos else "N/A"
 							if pbo_tube and pbo_fibre:
 								try:
 									tube_int = int(float(pbo_tube))
 									fibre_int = int(float(pbo_fibre))
 									full_id = f"{base_id} - T{tube_int}F{fibre_int}"
-								except ValueError:
+								except:
 									full_id = f"{base_id} - T{pbo_tube}F{pbo_fibre}"
-							elif pbo_tube:
-								try:
-									tube_int = int(float(pbo_tube))
-									full_id = f"{base_id} - T{tube_int}"
-								except ValueError:
-									full_id = f"{base_id} - T{pbo_tube}"
-							elif pbo_fibre:
-								try:
-									fibre_int = int(float(pbo_fibre))
-									full_id = f"{base_id} - F{fibre_int}"
-								except ValueError:
-									full_id = f"{base_id} - F{pbo_fibre}"
 							else:
 								full_id = base_id
 							
-							with st.expander(f"🔍 {full_id}", expanded=False):
+							with st.expander(f"🔍 {full_id}", expanded=(idx == 0)):
 								
 								# Informations générales avec design amélioré
 								col1, col2 = st.columns(2)
@@ -1092,27 +1131,36 @@ def main():
 										display_segment_condensed_with_colors(segment, i, cumul)
 								else:
 									st.info("ℹ️ Aucun segment de route détaillée trouvé pour cette ligne")
-									
-									# Afficher les données brutes si pas de segments
+									# Afficher les données brutes
 									st.markdown("**📄 Données de la ligne :**")
+									display_data = {}
 									for i, value in enumerate(row):
 										if pd.notna(value) and str(value).strip():
 											col_name = df.columns[i] if i < len(df.columns) else f"Col {i+1}"
-											st.text(f"{col_name}: {value}")
-						
-						if len(results) > 10:
-							st.info(f"ℹ️ Affichage des résultats sur {len(results)} trouvés")
+											display_data[col_name] = value
+									
+									if display_data:
+										for key, value in display_data.items():
+											st.text(f"{key}: {value}")
+									
+						if len(results) > 10 and not show_all:
+							st.info(f"ℹ️ Affichage des 10 premiers résultats sur {len(results)} trouvés. Cochez 'Afficher tous les résultats' pour voir plus.")
 							
 					else:
 						st.warning(f"❌ Aucun résultat trouvé pour '{search_term}'")
 						st.info("💡 Essayez avec un terme de recherche différent ou plus court")
+				else:
+					st.info("ℹ️ Veuillez sélectionner une valeur dans la liste déroulante")
 				
 		except Exception as e:
-			st.error(f"❌ Erreur lors du chargement du fichier: {str(e)}")
-			st.info("💡 Vérifiez que votre fichier Excel est valide et n'est pas protégé par mot de passe")
-
+			st.error(f"⚠️ Erreur lors du traitement: {str(e)}")
+			st.info("💡 Vérifiez que votre fichier Excel est valide")
+	else:
+		# Message d'accueil si aucun fichier n'est chargé
+		st.info("👆 Veuillez charger un fichier Excel Route Optique pour commencer l'analyse")
 if __name__ == "__main__":
     main()
+
 
 
 
