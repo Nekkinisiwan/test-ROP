@@ -477,8 +477,14 @@ def extract_route_segments(row, df):
 	etat_cols = []
 	k7_cols = []
 
-
-	for col in df.columns[1:]:
+	# Vérifier si la colonne 3 (index 2) a pour nom "k7"
+    ignore_col3_k7 = False
+    if len(df.columns) > 2:  # S'assurer que la colonne 3 existe
+        col3_name = df.columns[2].lower().strip()
+        if col3_name == 'k7':
+            ignore_col3_k7 = True
+			
+	for i, col in enumerate(df.columns[1:], start=1):  # Commencer à partir de la colonne 1 (index 1)
 		col_lower = col.lower().strip()
 		
 		# Vérifier si c'est une colonne câble
@@ -524,29 +530,15 @@ def extract_route_segments(row, df):
 				etat_cols.append(col)
 				break
 		
-		for k7_name in k7_names:
-				if k7_name.lower() in col_lower:
-					k7_cols.append(col)
-					break
-					
-	#if df.iloc[0,2] == "k7" or df.iloc[0,3] == "k7" or df.iloc[0,4] == "k7" :
-		#for col in df.columns[5:]:
-			#col_lower = col.lower().strip()
-			# Vérifier si c'est une colonne K7
-			#for k7_name in k7_names:
-				#if k7_name.lower() in col_lower:
-					#k7_cols.append(col)
-					#break
-			#break
-	#else :
-		#for col in df.columns[1:]:
-			#col_lower = col.lower().strip()
-			# Vérifier si c'est une colonne K7
-			#for k7_name in k7_names:
-				#if k7_name.lower() in col_lower:
-					#k7_cols.append(col)
-					#break
-			#break
+		# Vérifier si c'est une colonne K7 - AVEC LOGIQUE SPÉCIALE
+        for k7_name in k7_names:
+            if k7_name.lower() in col_lower:
+                # Si c'est la colonne 3 (index 2) ET que ignore_col3_k7 est True, ignorer
+                if i == 2 and ignore_col3_k7:  # i=2 correspond à l'index 2 (colonne 3)
+                    continue  # Ignorer cette colonne K7
+                else:
+                    k7_cols.append(col)  # Ajouter cette colonne K7
+                break
 				
 	# Créer des segments basés sur le nombre de colonnes trouvées
 	max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), 
@@ -966,6 +958,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
