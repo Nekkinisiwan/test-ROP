@@ -433,60 +433,108 @@ def extract_boite_names_from_df(df):
     
     return sorted(list(boite_names))
 	
-def calculate_prises_count(stban_df, boite_name):
-    """
-    Calcule le nombre de prises selon la logique métier:
-    - Nombre d'occurrences de boite_name dans REF_PBO_PRISE
-    - PLUS: Occurrences de boite_name dans REF_PBO_PTO qui ne sont pas dans REF_PBO_PRISE
-    - MOINS: Lignes où boite_name est dans REF_PBO_PRISE mais un autre nom est dans REF_PBO_PTO
-    """
-    if stban_df is None or boite_name is None or boite_name == '':
-        return None
-    
-    # Nettoyer le nom de la boîte pour la recherche
-    boite_name_clean = str(boite_name).strip().upper()
-    
-    # Vérifier que les colonnes nécessaires existent
-    required_cols = ['REF_PBO_PRISE', 'REF_PBO_PTO']
-    for col in required_cols:
-        if col not in stban_df.columns:
-            # Essayer avec des variantes
-            col_variants = [col.lower(), col.upper(), col.title()]
-            found = False
-            for variant in col_variants:
-                if variant in stban_df.columns:
-                    stban_df[col] = stban_df[variant]
-                    found = True
-                    break
-            if not found:
-                return None
-    
-    # Créer des copies des colonnes en majuscules pour la comparaison
-    stban_df['REF_PBO_PRISE_UPPER'] = stban_df['REF_PBO_PRISE'].fillna('').astype(str).str.strip().str.upper()
-    stban_df['REF_PBO_PTO_UPPER'] = stban_df['REF_PBO_PTO'].fillna('').astype(str).str.strip().str.upper()
-    
-    # 1. Compter les occurrences dans REF_PBO_PRISE
-    count_prise = (stban_df['REF_PBO_PRISE_UPPER'] == boite_name_clean).sum()
-    
-    # 2. Compter les occurrences dans REF_PBO_PTO qui ne sont PAS dans REF_PBO_PRISE
-    mask_pto_only = (stban_df['REF_PBO_PTO_UPPER'] == boite_name_clean) & (stban_df['REF_PBO_PRISE_UPPER'] != boite_name_clean)
-    count_pto_only = mask_pto_only.sum()
-    
-    # 3. Compter les lignes où boite_name est dans PRISE mais un AUTRE nom est dans PTO (PTO non vide)
-    mask_prise_autre_pto = (
-        (stban_df['REF_PBO_PRISE_UPPER'] == boite_name_clean) & 
-        (stban_df['REF_PBO_PTO_UPPER'] != '') & 
-        (stban_df['REF_PBO_PTO_UPPER'] != boite_name_clean)
-    )
-    count_prise_autre_pto = mask_prise_autre_pto.sum()
-    
-    # Calcul final
-    total_prises = count_prise + count_pto_only - count_prise_autre_pto
-    
-    # Nettoyer les colonnes temporaires
-    stban_df.drop(['REF_PBO_PRISE_UPPER', 'REF_PBO_PTO_UPPER'], axis=1, inplace=True)
-    
-    return total_prises
+def calculate_prises_count(stban_df, boite_name, debug=False):
+	"""
+	Calcule le nombre de prises selon la logique métier:
+	- Nombre d'occurrences de boite_name dans REF_PBO_PRISE
+	- PLUS: Occurrences de boite_name dans REF_PBO_PTO qui ne sont pas dans REF_PBO_PRISE
+	- MOINS: Lignes où boite_name est dans REF_PBO_PRISE mais un autre nom est dans REF_PBO_PTO
+	"""
+	if stban_df is None:
+		if debug:
+			st.warning("Debug: stban_df est None")
+		return None
+	
+	if boite_name is None or boite_name == '':
+		if debug:
+			st.warning("Debug: boite_name est vide ou None")
+		return None
+	
+	# Nettoyer le nom de la boîte pour la recherche
+	boite_name_clean = str(boite_name).strip().upper()
+	
+	if debug:
+		st.info(f"Debug: Recherche de la boîte '{boite_name_clean}'")
+		st.info(f"Debug: Colonnes disponibles dans STBAN: {list(stban_df.columns)}")
+	
+	# Recherche flexible des colonnes
+	prise_col = None
+	pto_col = None
+	
+	# Variantes possibles pour les noms de colonnes
+	prise_variants = ['REF_PBO_PRISE', 'ref_pbo_prise', 'Ref_Pbo_Prise', 'REF PBO PRISE', 
+					 'PBO_PRISE', 'pbo_prise', 'PRISE', 'REF_PRISE']
+	pto_variants = ['REF_PBO_PTO', 'ref_pbo_pto', 'Ref_Pbo_Pto', 'REF PBO PTO', 
+				   'PBO_PTO', 'pbo_pto', 'PTO', 'REF_PTO']
+	
+	# Chercher la colonne PRISE
+	for col in stban_df.columns:
+		col_clean = col.strip()
+		if col_clean in prise_variants or col_clean.upper() in [v.upper() for v in prise_variants]:
+			prise_col = col
+			break
+		# Recherche partielle
+		for variant in prise_variants:
+			if variant.upper() in col_clean.upper() or col_clean.upper() in variant.upper():
+				prise_col = col
+				break
+		if prise_col:
+			break
+	
+	# Chercher la colonne PTO
+	for col in stban_df.columns:
+		col_clean = col.strip()
+		if col_clean in pto_variants or col_clean.upper() in [v.upper() for v in pto_variants]:
+			pto_col = col
+			break
+		# Recherche partielle
+		for variant in pto_variants:
+			if variant.upper() in col_clean.upper() or col_clean.upper() in variant.upper():
+				pto_col = col
+				break
+		if pto_col:
+			break
+	
+	if not prise_col or not pto_col:
+		if debug:
+			st.warning(f"Debug: Colonnes non trouvées - PRISE: {prise_col}, PTO: {pto_col}")
+			st.warning("Debug: Vérifiez que le fichier STBAN contient les colonnes REF_PBO_PRISE et REF_PBO_PTO")
+		return None
+	
+	if debug:
+		st.success(f"Debug: Colonnes trouvées - PRISE: '{prise_col}', PTO: '{pto_col}'")
+	
+	# Créer des copies des colonnes en majuscules pour la comparaison
+	stban_df_copy = stban_df.copy()
+	stban_df_copy['PRISE_UPPER'] = stban_df_copy[prise_col].fillna('').astype(str).str.strip().str.upper()
+	stban_df_copy['PTO_UPPER'] = stban_df_copy[pto_col].fillna('').astype(str).str.strip().str.upper()
+	
+	# 1. Compter les occurrences dans REF_PBO_PRISE
+	count_prise = (stban_df_copy['PRISE_UPPER'] == boite_name_clean).sum()
+	
+	# 2. Compter les occurrences dans REF_PBO_PTO qui ne sont PAS dans REF_PBO_PRISE
+	mask_pto_only = (stban_df_copy['PTO_UPPER'] == boite_name_clean) & (stban_df_copy['PRISE_UPPER'] != boite_name_clean)
+	count_pto_only = mask_pto_only.sum()
+	
+	# 3. Compter les lignes où boite_name est dans PRISE mais un AUTRE nom est dans PTO (PTO non vide)
+	mask_prise_autre_pto = (
+		(stban_df_copy['PRISE_UPPER'] == boite_name_clean) & 
+		(stban_df_copy['PTO_UPPER'] != '') & 
+		(stban_df_copy['PTO_UPPER'] != boite_name_clean)
+	)
+	count_prise_autre_pto = mask_prise_autre_pto.sum()
+	
+	# Calcul final
+	total_prises = count_prise + count_pto_only - count_prise_autre_pto
+	
+	if debug:
+		st.info(f"Debug: Calcul détaillé pour '{boite_name_clean}':")
+		st.info(f"  - Dans PRISE: {count_prise}")
+		st.info(f"  - Dans PTO uniquement: {count_pto_only}")
+		st.info(f"  - Dans PRISE avec autre PTO: {count_prise_autre_pto}")
+		st.info(f"  - TOTAL: {total_prises}")
+	
+	return total_prises
 	
 def get_status_class_condensed(status):
     """Retourne la classe CSS selon le statut pour l'affichage condensé"""
@@ -947,7 +995,7 @@ def main():
 	# Upload des fichiers
 	st.markdown('<div class="upload-container fade-in">', unsafe_allow_html=True)
 	st.markdown("### 📊 Charger vos fichiers")
-
+	
 	col1, col2 = st.columns(2)
 	
 	with col1:
@@ -966,7 +1014,9 @@ def main():
 		)
 		
 	st.markdown('</div>', unsafe_allow_html=True)
-
+	
+	# Charger le fichier STBAN si fourni
+	stban_df = None
 	# Charger le fichier STBAN si fourni
 	stban_df = None
 	if stban_file is not None:
@@ -977,7 +1027,25 @@ def main():
 					try:
 						stban_df = pd.read_csv(stban_file, sep=sep, encoding=encoding)
 						if len(stban_df.columns) > 1:  # Vérifier que le séparateur est correct
-							st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes)")
+							st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes, {len(stban_df.columns)} colonnes)")
+							
+							# Afficher les colonnes détectées pour vérification
+							with st.expander("📊 Colonnes détectées dans le fichier STBAN", expanded=False):
+								st.write("Colonnes disponibles :")
+								for i, col in enumerate(stban_df.columns, 1):
+									st.text(f"{i}. {col}")
+								
+								# Vérifier la présence des colonnes importantes
+								prise_found = any('PRISE' in col.upper() for col in stban_df.columns)
+								pto_found = any('PTO' in col.upper() for col in stban_df.columns)
+								
+								if prise_found and pto_found:
+									st.success("✅ Colonnes PRISE et PTO détectées")
+								else:
+									if not prise_found:
+										st.warning("⚠️ Aucune colonne contenant 'PRISE' détectée")
+									if not pto_found:
+										st.warning("⚠️ Aucune colonne contenant 'PTO' détectée")
 							break
 					except:
 						continue
@@ -1064,13 +1132,18 @@ def main():
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
 						results_title = f"### 📋 {len(results)} résultat(s) trouvé(s) pour '{selected_value}'"
-
+	
 						# Calculer le nombre de prises si STBAN est chargé et mode boîte
 						prises_count_display = ""
+						debug_mode = False
 						if stban_df is not None and search_mode == "🎯 Recherche par boîte":
-							prises_count = calculate_prises_count(stban_df, selected_value)
+							# Activer le debug si nécessaire
+							debug_mode = st.checkbox("🔧 Mode debug pour le calcul des prises", value=False)
+							prises_count = calculate_prises_count(stban_df, selected_value, debug=debug_mode)
 							if prises_count is not None:
 								prises_count_display = f'<span class="prises-badge">🔌 Nombre de prises: {prises_count}</span>'
+							elif debug_mode:
+								st.error("❌ Le calcul des prises a retourné None. Vérifiez les messages de debug ci-dessus.")
 						
 						# Afficher le titre avec le nombre de prises
 						st.markdown(f'{results_title} {prises_count_display}', unsafe_allow_html=True)
@@ -1127,13 +1200,13 @@ def main():
 								
 								if segments:
 									st.markdown("#### 🗺️ Route Détaillée")
-
+	
 									# Afficher le nombre de prises pour ce résultat spécifique si en mode boîte
 									if stban_df is not None and search_mode == "🎯 Recherche par boîte" and selected_value:
 										prises_count_individual = calculate_prises_count(stban_df, selected_value)
 										if prises_count_individual is not None:
 											st.markdown(f'<div class="prises-badge">🔌 Prises pour {selected_value}: {prises_count_individual}</div>', unsafe_allow_html=True)
-
+	
 									# Calculer les cumuls de longueurs
 									cumulative_lengths = calculate_cumulative_lengths(segments)
 									#st.write(cumulative_lengths)
@@ -1171,8 +1244,10 @@ def main():
 	else:
 		# Message d'accueil si aucun fichier n'est chargé
 		st.info("👆 Veuillez charger un fichier Excel Route Optique pour commencer l'analyse")
+		
 if __name__ == "__main__":
     main()
+
 
 
 
