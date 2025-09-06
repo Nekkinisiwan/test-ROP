@@ -206,7 +206,21 @@ st.markdown("""
 	.k7-badge-condensed {
         background-color: #000000;
         color: #ffffff;
-		border-color: #9ca3af;
+		border-color: #000000;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: 0.8rem;
+        border: 2px solid;
+        min-width: 2.5rem;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+    
+    .k7-badge-condensed:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow-md);
     }
 	
     /* Status badges personnalisés */
@@ -531,7 +545,9 @@ def extract_route_segments(row, df):
 			break
 				
 	# Créer des segments basés sur le nombre de colonnes trouvées
-	max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols), len(k7_cols))
+	max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), 
+					   len(tube_cols), len(fibre_cols), len(boite_cols), 
+					   len(etat_cols), len(k7_cols))
 
 	for i in range(max_segments):
 		cable = ''
@@ -759,15 +775,15 @@ def display_segment_condensed_with_colors(segment, index):
 				f'color: white; border-color: #9ca3af;">F{segment["fibre"]}</div>'
 			)
 
+	# 7. K7
+	if segment['k7']:
+		group_elements.append(f'<div class="k7-badge-condensed">{segment["k7"]}</div>')
+		
 	# 6. Statut coloré
 	if segment['etat']:
 		status_class = get_status_class_condensed(segment['etat'])
 		group_elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
 
-	# 7. K7
-	if segment['k7']:
-		group_elements.append(f'<div class="k7-badge-condensed">{segment["k7"]}</div>')
-		
 	# Assembler le groupe d'éléments
 	if group_elements:
 		group_html = '<div class="elements-group">' + ''.join(group_elements) + '</div>'
@@ -946,6 +962,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
