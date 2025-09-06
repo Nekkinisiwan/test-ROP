@@ -458,7 +458,7 @@ def extract_route_segments(row, df):
 	etat_cols = []
 	k7_cols = []
 
-	for col in df.columns:
+	for col in df.columns[1:]:
 		col_lower = col.lower().strip()
 		
 		# Vérifier si c'est une colonne câble
@@ -683,77 +683,82 @@ def format_cable_name_with_capacity_and_length(cable, capacite, longueur):
     return result
 
 def display_segment_condensed_with_colors(segment, index):
-    """Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml Boite T1 F1 STATUS"""
-    
-    # Construire le nom du câble avec capacité et longueur
-    cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'])
-    
-    # Construire les éléments HTML
-    elements = []
-    
-    # 1. Nom du câble
-    if cable_name:
-        elements.append(f'<div class="cable-name-condensed">{cable_name}</div>')
-    
-    # 2. Groupe des autres éléments (boite, tube, fibre, statut)
-    group_elements = []
-    
-    # 3. Boite
-    if segment['boite']:
-        group_elements.append(f'<div class="boite-badge-condensed">{segment["boite"]}</div>')
-    
-    # 4. Tube coloré
-    if segment['tube']:
-        try:
-            tube_int = int(float(segment['tube']))
-            tube_color = get_tube_fiber_color(tube_int)
-            tube_text_color = get_text_color(tube_color)
-            
-            group_elements.append(
-                f'<div class="tube-badge-condensed" style="background-color: {tube_color}; '
-                f'color: {tube_text_color}; border-color: {tube_color};">T{tube_int}</div>'
-            )
-        except ValueError:
-            group_elements.append(
-                f'<div class="tube-badge-condensed" style="background-color: #9ca3af; '
-                f'color: white; border-color: #9ca3af;">T{segment["tube"]}</div>'
-            )
-    
-    # 5. Fibre colorée
-    if segment['fibre']:
-        try:
-            fibre_int = int(float(segment['fibre']))
-            fibre_color = get_tube_fiber_color(fibre_int)
-            fibre_text_color = get_text_color(fibre_color)
-            
-            group_elements.append(
-                f'<div class="fiber-badge-condensed" style="background-color: {fibre_color}; '
-                f'color: {fibre_text_color}; border-color: {fibre_color};">F{fibre_int}</div>'
-            )
-        except ValueError:
-            group_elements.append(
-                f'<div class="fiber-badge-condensed" style="background-color: #9ca3af; '
-                f'color: white; border-color: #9ca3af;">F{segment["fibre"]}</div>'
-            )
-    
-    # 6. Statut coloré
-    if segment['etat']:
-        status_class = get_status_class_condensed(segment['etat'])
-        group_elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
-    
-    # Assembler le groupe d'éléments
-    if group_elements:
-        group_html = '<div class="elements-group">' + ''.join(group_elements) + '</div>'
-        elements.append(group_html)
-    
-    # Assembler tous les éléments
-    content_html = ''.join(elements)
-    
-    # Afficher avec unsafe_allow_html=True
-    st.markdown(
-        f'<div class="segment-condensed fade-in">{content_html}</div>',
-        unsafe_allow_html=True
-    )
+	"""Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml Boite T1 F1 STATUS"""
+
+	# Construire le nom du câble avec capacité et longueur
+	cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'])
+
+	# Construire les éléments HTML
+	elements = []
+
+	# 1. Nom du câble
+	if cable_name:
+		elements.append(f'<div class="cable-name-condensed">{cable_name}</div>')
+
+	# 2. Groupe des autres éléments (boite, tube, fibre, statut)
+	group_elements = []
+
+	# 3. Boite
+	if segment['boite']:
+		group_elements.append(f'<div class="boite-badge-condensed">{segment["boite"]}</div>')
+
+	# 4. Tube coloré
+	if segment['tube']:
+		try:
+			tube_int = int(float(segment['tube']))
+			tube_color = get_tube_fiber_color(tube_int)
+			tube_text_color = get_text_color(tube_color)
+			
+			group_elements.append(
+				f'<div class="tube-badge-condensed" style="background-color: {tube_color}; '
+				f'color: {tube_text_color}; border-color: {tube_color};">T{tube_int}</div>'
+			)
+		except ValueError:
+			group_elements.append(
+				f'<div class="tube-badge-condensed" style="background-color: #9ca3af; '
+				f'color: white; border-color: #9ca3af;">T{segment["tube"]}</div>'
+			)
+
+	# 5. Fibre colorée
+	if segment['fibre']:
+		try:
+			fibre_int = int(float(segment['fibre']))
+			fibre_color = get_tube_fiber_color(fibre_int)
+			fibre_text_color = get_text_color(fibre_color)
+			
+			group_elements.append(
+				f'<div class="fiber-badge-condensed" style="background-color: {fibre_color}; '
+				f'color: {fibre_text_color}; border-color: {fibre_color};">F{fibre_int}</div>'
+			)
+		except ValueError:
+			group_elements.append(
+				f'<div class="fiber-badge-condensed" style="background-color: #9ca3af; '
+				f'color: white; border-color: #9ca3af;">F{segment["fibre"]}</div>'
+			)
+
+	# 6. Statut coloré
+	if segment['etat']:
+		status_class = get_status_class_condensed(segment['etat'])
+		group_elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
+
+	# 7. K7
+	if segment['k7']:
+		status_class = get_status_class_condensed(segment['k7'])
+		group_elements.append(f'<div class="{status_class}">{segment["k7"]}</div>')
+		
+	# Assembler le groupe d'éléments
+	if group_elements:
+		group_html = '<div class="elements-group">' + ''.join(group_elements) + '</div>'
+		elements.append(group_html)
+
+	# Assembler tous les éléments
+	content_html = ''.join(elements)
+
+	# Afficher avec unsafe_allow_html=True
+	st.markdown(
+		f'<div class="segment-condensed fade-in">{content_html}</div>',
+		unsafe_allow_html=True
+	)
 
 # Interface principale
 def main():
@@ -885,7 +890,7 @@ def main():
 										st.markdown(f"""
 										<div class="metric-container">
 											<div class="metric-label">📍 Position</div>
-											<div class="metric-value">{pos}</div>
+											<div class="metric-value">{pos}div>
 										</div>
 										""", unsafe_allow_html=True)
 								
@@ -919,4 +924,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
