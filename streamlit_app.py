@@ -1128,7 +1128,7 @@ def main():
 					# Recherche dans toutes les colonnes
 					found_column_name = None
 					for col in df.columns:
-						if df[col].astype(str).str.contains(str(searched_value)).any():
+						if df[col].astype(str).str.contains(str(selected_value)).any():
 							found_column_name = col
 							break
 					
@@ -1143,7 +1143,7 @@ def main():
 				
 					target_column_name = df.columns[target_col_index]
 				
-					results = df[(df[found_column_name] == searched_value) & (df[target_column_name] == 'STOCKEE')]	
+					results = df[(df[found_column_name] == selected_value) & (df[target_column_name] == 'STOCKEE')]	
 					
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
@@ -1253,3 +1253,4 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
