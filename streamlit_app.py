@@ -221,6 +221,21 @@ st.markdown("""
         transform: scale(1.05);
         box-shadow: var(--shadow-md);
     }
+
+  	/* Badge pour nombre de prises */
+    .prises-badge {
+        background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+        color: #1e3a8a;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid #3b82f6;
+        margin-left: 1rem;
+    }
 	
     /* Status badges personnalisés */
     .status-epissuree {
@@ -390,6 +405,52 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def calculate_prises_count(stban_df, boite_name):
+    """
+    Calcule le nombre de prises selon la logique métier:
+    - Nombre d'occurrences de boite_name dans REF_PBO_PRISE
+    - PLUS: Occurrences de boite_name dans REF_PBO_PTO qui ne sont pas dans REF_PBO_PRISE
+    - MOINS: Lignes où boite_name est dans REF_PBO_PRISE mais un autre nom est dans REF_PBO_PTO
+    """
+    if stban_df is None or boite_name is None or boite_name == '':
+        return None
+    
+    # Nettoyer le nom de la boîte pour la recherche
+    boite_name_clean = str(boite_name).strip().upper()
+    
+    # Vérifier que les colonnes nécessaires existent
+    required_cols = ['REF_PBO_PRISE', 'REF_PBO_PTO']
+    for col in required_cols:
+        if col not in stban_df.columns:
+            return None
+    
+    # Créer des copies des colonnes en majuscules pour la comparaison
+    stban_df['REF_PBO_PRISE_UPPER'] = stban_df['REF_PBO_PRISE'].fillna('').astype(str).str.strip().str.upper()
+    stban_df['REF_PBO_PTO_UPPER'] = stban_df['REF_PBO_PTO'].fillna('').astype(str).str.strip().str.upper()
+    
+    # 1. Compter les occurrences dans REF_PBO_PRISE
+    count_prise = (stban_df['REF_PBO_PRISE_UPPER'] == boite_name_clean).sum()
+    
+    # 2. Compter les occurrences dans REF_PBO_PTO qui ne sont PAS dans REF_PBO_PRISE
+    mask_pto_only = (stban_df['REF_PBO_PTO_UPPER'] == boite_name_clean) & (stban_df['REF_PBO_PRISE_UPPER'] != boite_name_clean)
+    count_pto_only = mask_pto_only.sum()
+    
+    # 3. Compter les lignes où boite_name est dans PRISE mais un AUTRE nom est dans PTO (PTO non vide)
+    mask_prise_autre_pto = (
+        (stban_df['REF_PBO_PRISE_UPPER'] == boite_name_clean) & 
+        (stban_df['REF_PBO_PTO_UPPER'] != '') & 
+        (stban_df['REF_PBO_PTO_UPPER'] != boite_name_clean)
+    )
+    count_prise_autre_pto = mask_prise_autre_pto.sum()
+    
+    # Calcul final
+    total_prises = count_prise + count_pto_only - count_prise_autre_pto
+    
+    # Nettoyer les colonnes temporaires
+    stban_df.drop(['REF_PBO_PRISE_UPPER', 'REF_PBO_PTO_UPPER'], axis=1, inplace=True)
+    
+    return total_prises
+	
 def get_status_class_condensed(status):
     """Retourne la classe CSS selon le statut pour l'affichage condensé"""
     if not status:
@@ -848,14 +909,45 @@ def main():
 	
 	# Upload de fichier avec design amélioré
 	st.markdown('<div class="upload-container fade-in">', unsafe_allow_html=True)
-	st.markdown("### 📊 Charger votre fichier Excel")
+	st.markdown("### 📊 Charger vos fichiers")
+
+	col1, col2 = st.columns(2)
 	
-	uploaded_file = st.file_uploader(
-		"Sélectionnez un fichier Excel (.xlsx, .xls)",
-		type=['xlsx', 'xls']
-	)
+	with col1:
+		uploaded_file = st.file_uploader(
+			"📑 Fichier Excel Route Optique (.xlsx, .xls)",
+			type=['xlsx', 'xls'],
+			key="route_optique"
+		)
+	
+	with col2:
+		stban_file = st.file_uploader(
+			"📋 Fichier CSV STBAN (optionnel)",
+			type=['csv'],
+			key="stban",
+			help="Chargez le fichier STBAN pour calculer le nombre de prises"
+		)
+		
 	st.markdown('</div>', unsafe_allow_html=True)
-	
+
+	# Charger le fichier STBAN si fourni
+	stban_df = None
+	if stban_file is not None:
+		try:
+			stban_df = pd.read_csv(stban_file, sep=';', encoding='utf-8')
+			st.success(f"✅ Fichier STBAN chargé avec succès ({len(stban_df)} lignes)")
+		except Exception as e:
+			try:
+				stban_df = pd.read_csv(stban_file, sep=',', encoding='utf-8')
+				st.success(f"✅ Fichier STBAN chargé avec succès ({len(stban_df)} lignes)")
+			except:
+				try:
+					stban_df = pd.read_csv(stban_file, sep=';', encoding='latin-1')
+					st.success(f"✅ Fichier STBAN chargé avec succès ({len(stban_df)} lignes)")
+				except:
+					st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
+					stban_df = None
+					
 	if uploaded_file is not None:
 		try:
 			# Charger le fichier Excel avec gestion d'erreurs améliorée
@@ -899,7 +991,25 @@ def main():
 					results = df[mask]
 					
 					if len(results) > 0:
-						st.markdown(f"### 📋 {len(results)} résultat(s) trouvé(s)")
+						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
+						results_title = f"### 📋 {len(results)} résultat(s) trouvé(s)"
+						
+						# Calculer le nombre de prises si STBAN est chargé
+						prises_count_display = ""
+						if stban_df is not None:
+							# Extraire les segments de la première ligne trouvée pour obtenir le nom de la boîte
+							if len(results) > 0:
+								first_row = results.iloc[0]
+								segments = extract_route_segments(first_row, df)
+								boite_name = get_boite_from_segments(segments)
+								
+								if boite_name:
+									prises_count = calculate_prises_count(stban_df, boite_name)
+									if prises_count is not None:
+										prises_count_display = f'<span class="prises-badge">🔌 Nombre de prises: {prises_count}</span>'
+						
+						# Afficher le titre avec le nombre de prises si disponible
+						st.markdown(f'{results_title} {prises_count_display}', unsafe_allow_html=True)
 						
 						# Afficher les résultats
 						for idx, (_, row) in enumerate(results.iterrows()):
@@ -996,6 +1106,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
