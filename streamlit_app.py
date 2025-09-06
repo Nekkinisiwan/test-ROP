@@ -1250,7 +1250,7 @@ def main():
 							st.info(f"ℹ️ Affichage des 10 premiers résultats sur {len(results)} trouvés. Cochez 'Afficher tous les résultats' pour voir plus.")
 							
 					else:
-						st.warning(f"❌ Aucun résultat trouvé pour '{search_term}'")
+						st.warning(f"❌ Aucun résultat trouvé pour '{selected_value}'")
 						st.info("💡 Essayez avec un terme de recherche différent ou plus court")
 				else:
 					st.info("ℹ️ Veuillez sélectionner une valeur dans la liste déroulante")
@@ -1264,6 +1264,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
