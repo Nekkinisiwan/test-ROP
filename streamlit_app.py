@@ -1126,35 +1126,24 @@ def main():
 			if (selected_value and selected_value != '') or search_button:
 				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
-					# Convertir en chaîne pour le filtrage texte
-					df_str = df.astype(str)
+					found_column_name = None
+				    for col in df.columns:
+				        if df[col].astype(str).str.contains(str(searched_value)).any():
+				            found_column_name = col
+				            break
 					
-					# Filtrer pour les lignes où la valeur recherchée apparaît quelque part
-					mask1 = df_str.apply(lambda x: x.str.contains(selected_value, case=False, na=False)).any(axis=1)
-
-					# DataFrame filtré avec ces lignes
-					df_filtered = df[mask1]
-
-					# Trouver la première colonne où la valeur apparaît dans les lignes filtrées
-					col_index = None
-					for idx, col in enumerate(df_filtered.columns):
-					    if df_filtered[col].astype(str).str.contains(selected_value, case=False, na=False).any():
-					        col_index = idx
-					        break
-
-					# Vérifier qu'on ne dépasse pas le nombre de colonnes
-					if col_index + 2 < len(df.columns):
-					    # Condition que la cellule 2 colonnes après soit égale à "STOCKEE"
-					    mask2 = df.iloc[:, col_index + 2] == "STOCKEE"
-					else:
-					    # Par sécurité, si on dépasse, on force tout à False (aucune ligne)
-					    mask2 = pd.Series([False] * len(df))
+						if found_column_name is None:
+				        	return None
 					
-					# Combinaison des deux masques
-					mask = mask1 & mask2
-					
-					# Application du filtre
-					results = df[mask]
+					col_index = df.columns.get_loc(found_column_name)
+				    target_col_index = col_index + 2
+				
+				    if target_col_index >= len(df.columns):
+				        return None
+				
+				    target_column_name = df.columns[target_col_index]
+				
+				    results = df[(df[found_column_name] == searched_value) & (df[target_column_name] == 'STOCKEE')]	
 					
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
@@ -1264,6 +1253,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
