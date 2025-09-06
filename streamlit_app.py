@@ -512,59 +512,59 @@ def extract_route_segments(row, df):
     # Créer des segments basés sur le nombre de colonnes trouvées
     max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), len(tube_cols), len(fibre_cols), len(boite_cols), len(etat_cols), len(k7_cols))
     
-    for i in range(max_segments):
-        cable = ''
-        capacite = ''
-        longueur = ''
-        tube = ''
-        fibre = ''
-        boite = ''
-        etat = ''
-        k7 = ''
+	for i in range(max_segments):
+		cable = ''
+		capacite = ''
+		longueur = ''
+		tube = ''
+		fibre = ''
+		boite = ''
+		etat = ''
+		k7 = ''
 		
-        # Récupérer les valeurs pour chaque segment
-        if i < len(cable_cols) and cable_cols[i] in row.index:
-            cable = str(row[cable_cols[i]]).strip() if pd.notna(row[cable_cols[i]]) else ''
-            
-        if i < len(capacite_cols) and capacite_cols[i] in row.index:
-            capacite = str(row[capacite_cols[i]]).strip() if pd.notna(row[capacite_cols[i]]) else ''
-            
-        if i < len(longueur_cols) and longueur_cols[i] in row.index:
-            longueur = str(row[longueur_cols[i]]).strip() if pd.notna(row[longueur_cols[i]]) else ''
-            
-        if i < len(tube_cols) and tube_cols[i] in row.index:
-            tube = str(row[tube_cols[i]]).strip() if pd.notna(row[tube_cols[i]]) else ''
-            
-        if i < len(fibre_cols) and fibre_cols[i] in row.index:
-            fibre = str(row[fibre_cols[i]]).strip() if pd.notna(row[fibre_cols[i]]) else ''
-            
-        if i < len(boite_cols) and boite_cols[i] in row.index:
-            boite = str(row[boite_cols[i]]).strip() if pd.notna(row[boite_cols[i]]) else ''
-            
-        if i < len(etat_cols) and etat_cols[i] in row.index:
-            etat_val = str(row[etat_cols[i]]).strip().upper() if pd.notna(row[etat_cols[i]]) else ''
-            if etat_val in ['STOCKEE', 'EN PASSAGE', 'EPISSUREE', 'OK', 'NOK']:
-                etat = etat_val
-        
-		if i < len(k7_cols) and k7_cols[i] in row.index:
-            k7 = str(row[k7_cols[i]]).strip() if pd.notna(row[k7_cols[i]]) else ''
+		# Récupérer les valeurs pour chaque segment
+		if i < len(cable_cols) and cable_cols[i] in row.index:
+			cable = str(row[cable_cols[i]]).strip() if pd.notna(row[cable_cols[i]]) else ''
 			
-        # Créer un segment s'il y a au moins une valeur
-        if any([cable, capacite, longueur, tube, fibre, boite, etat, k7]):
-            segment = {
-                'title': f'Segment {i + 1}',
-                'cable': cable,
-                'capacite': capacite,
-                'longueur': longueur,
-                'tube': tube,
-                'fibre': fibre,
-                'boite': boite,
-                'etat': etat,
+		if i < len(capacite_cols) and capacite_cols[i] in row.index:
+			capacite = str(row[capacite_cols[i]]).strip() if pd.notna(row[capacite_cols[i]]) else ''
+			
+		if i < len(longueur_cols) and longueur_cols[i] in row.index:
+			longueur = str(row[longueur_cols[i]]).strip() if pd.notna(row[longueur_cols[i]]) else ''
+			
+		if i < len(tube_cols) and tube_cols[i] in row.index:
+			tube = str(row[tube_cols[i]]).strip() if pd.notna(row[tube_cols[i]]) else ''
+			
+		if i < len(fibre_cols) and fibre_cols[i] in row.index:
+			fibre = str(row[fibre_cols[i]]).strip() if pd.notna(row[fibre_cols[i]]) else ''
+			
+		if i < len(boite_cols) and boite_cols[i] in row.index:
+			boite = str(row[boite_cols[i]]).strip() if pd.notna(row[boite_cols[i]]) else ''
+			
+		if i < len(etat_cols) and etat_cols[i] in row.index:
+			etat_val = str(row[etat_cols[i]]).strip().upper() if pd.notna(row[etat_cols[i]]) else ''
+			if etat_val in ['STOCKEE', 'EN PASSAGE', 'EPISSUREE', 'OK', 'NOK']:
+				etat = etat_val
+		
+		if i < len(k7_cols) and k7_cols[i] in row.index:
+			k7 = str(row[k7_cols[i]]).strip() if pd.notna(row[k7_cols[i]]) else ''
+			
+		# Créer un segment s'il y a au moins une valeur
+		if any([cable, capacite, longueur, tube, fibre, boite, etat, k7]):
+			segment = {
+				'title': f'Segment {i + 1}',
+				'cable': cable,
+				'capacite': capacite,
+				'longueur': longueur,
+				'tube': tube,
+				'fibre': fibre,
+				'boite': boite,
+				'etat': etat,
 				'k7': k7
-            }
-            segments.append(segment)
-    
-    return segments
+			}
+			segments.append(segment)
+
+	return segments
 
 def get_tiroir_pos(row, df):
     """Récupère tiroir et position par nom de colonne ou position par défaut"""
