@@ -1068,7 +1068,7 @@ def main():
 		except Exception as e:
 			st.error(f"⚠️ Erreur: {str(e)}")
 			stban_df = None
-
+	
 	rop_df = None
 	if uploaded_file is not None:
 		try:
@@ -1137,16 +1137,20 @@ def main():
 			if (selected_value and selected_value != '') or search_button:
 				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
-
+					
 					# Find boolean mask where value appears
 					mask = rop_df == selected_value
+					
+					# on crée un masque booléen pour les colonnes à exclure qui contiennent "PBO EXTREMITE"
+					exclude_cols = rop_df.columns.str.contains("EXTREMI")
+	
 					# Find column indices where the value exists (True)
-					column_indices = np.where(mask.any(axis=0))[0]
-
+					column_indices = np.where(mask.any(axis=0) & ~exclude_cols)[0]
+	
 					col_index = column_indices[0] if len(column_indices) > 0 else None
 					st.write(col_index)
 					results = rop_df[(rop_df.iloc[:, col_index] == selected_value) &
-					    (rop_df.iloc[:, col_index + 3] == "STOCKEE")
+						(rop_df.iloc[:, col_index + 3] == "STOCKEE")
 					]
 					
 					if len(results) > 0:
@@ -1257,6 +1261,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
