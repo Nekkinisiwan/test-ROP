@@ -1006,12 +1006,12 @@ def main():
 		)
 	
 	with col2:
-		stban_file = st.file_uploader(
-			"📋 Fichier CSV STBAN (optionnel)",
-			type=['csv'],
-			key="stban",
-			help="Chargez le fichier STBAN pour calculer le nombre de prises"
-		)
+	stban_file = st.file_uploader(
+		"📋 Fichier Excel STBAN (optionnel)",
+		type=['xlsx', 'xls'],
+		key="stban",
+		help="Chargez le fichier STBAN pour calculer le nombre de prises"
+	)
 		
 	st.markdown('</div>', unsafe_allow_html=True)
 	
@@ -1019,136 +1019,77 @@ def main():
 	stban_df = None
 	if stban_file is not None:
 		try:
-			# D'abord, essayer de lire les premières lignes pour comprendre la structure
-			st.info("🔍 Analyse de la structure du fichier STBAN...")
-			
-			# Lire les 10 premières lignes pour inspection
-			preview_lines = []
-			stban_file.seek(0)  # Revenir au début du fichier
-			for i, line in enumerate(stban_file):
-				if i >= 10:
-					break
+			# Charger le fichier Excel STBAN
+			try:
+				stban_df = pd.read_excel(stban_file, engine='openpyxl')
+			except:
 				try:
-					preview_lines.append(line.decode('utf-8'))
+					stban_df = pd.read_excel(stban_file, engine='xlrd')
 				except:
-					try:
-						preview_lines.append(line.decode('latin-1'))
-					except:
-						preview_lines.append(str(line))
+					stban_df = pd.read_excel(stban_file)
 			
-			# Afficher l'aperçu
-			with st.expander("👁️ Aperçu des premières lignes du fichier STBAN", expanded=True):
-				st.text("Premières lignes du fichier (pour identifier la ligne d'en-têtes) :")
-				for i, line in enumerate(preview_lines):
-					st.text(f"Ligne {i}: {line[:200]}...")  # Limiter à 200 caractères
-			
-			# Permettre à l'utilisateur de spécifier la ligne d'en-tête
-			header_row = st.number_input(
-				"📍 Numéro de la ligne contenant les en-têtes (0 = première ligne)",
-				min_value=0,
-				max_value=10,
-				value=0,
-				help="Si les en-têtes ne sont pas sur la première ligne, indiquez le numéro de ligne correct"
-			)
-			
-			# Sélection du séparateur
-			separator = st.selectbox(
-				"📍 Séparateur de colonnes",
-				options=[';', ',', '\t', '|'],
-				index=0,
-				help="Choisissez le caractère qui sépare les colonnes dans votre fichier"
-			)
-			
-			# Bouton pour charger avec les paramètres choisis
-			if st.button("📥 Charger le STBAN avec ces paramètres"):
-				stban_file.seek(0)  # Revenir au début
+			if stban_df is not None and len(stban_df) > 0:
+				st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes, {len(stban_df.columns)} colonnes)")
 				
-				# Essayer de charger avec les paramètres spécifiés
-				for encoding in ['utf-8', 'latin-1', 'iso-8859-1']:
-					try:
-						stban_df = pd.read_csv(
-							stban_file, 
-							sep=separator, 
-							encoding=encoding,
-							header=header_row,  # Utiliser la ligne spécifiée comme en-tête
-							skiprows=None if header_row == 0 else list(range(header_row))  # Ignorer les lignes avant l'en-tête
-						)
-						
-						if len(stban_df.columns) > 1:
-							st.success(f"✅ Fichier STBAN chargé avec succès!")
-							st.info(f"📊 {len(stban_df)} lignes de données, {len(stban_df.columns)} colonnes")
-							
-							# Afficher les colonnes détectées
-							with st.expander("📋 Colonnes détectées dans le fichier STBAN", expanded=True):
-								col1, col2 = st.columns(2)
-								
-								with col1:
-									st.write("**Colonnes trouvées :**")
-									for i, col in enumerate(stban_df.columns[:len(stban_df.columns)//2], 1):
-										if 'PRISE' in col.upper():
-											st.success(f"{i}. ✅ {col}")
-										elif 'PTO' in col.upper():
-											st.info(f"{i}. ✅ {col}")
-										else:
-											st.text(f"{i}. {col}")
-								
-								with col2:
-									for i, col in enumerate(stban_df.columns[len(stban_df.columns)//2:], len(stban_df.columns)//2 + 1):
-										if 'PRISE' in col.upper():
-											st.success(f"{i}. ✅ {col}")
-										elif 'PTO' in col.upper():
-											st.info(f"{i}. ✅ {col}")
-										else:
-											st.text(f"{i}. {col}")
-								
-								# Vérification spécifique
-								prise_cols = [col for col in stban_df.columns if 'PRISE' in col.upper()]
-								pto_cols = [col for col in stban_df.columns if 'PTO' in col.upper()]
-								
-								st.markdown("---")
-								if prise_cols:
-									st.success(f"✅ Colonne(s) PRISE trouvée(s): {', '.join(prise_cols)}")
-								else:
-									st.error("❌ Aucune colonne contenant 'PRISE' trouvée")
-									st.warning("💡 Vérifiez que la ligne d'en-tête est correcte (paramètre ci-dessus)")
-								
-								if pto_cols:
-									st.success(f"✅ Colonne(s) PTO trouvée(s): {', '.join(pto_cols)}")
-								else:
-									st.error("❌ Aucune colonne contenant 'PTO' trouvée")
-							
-							# Afficher un échantillon des données
-							with st.expander("📊 Aperçu des données STBAN", expanded=False):
-								st.dataframe(stban_df.head(5))
-							
-							break
-							
-					except Exception as e:
-						if encoding == 'iso-8859-1':  # Dernière tentative
-							st.error(f"❌ Erreur avec l'encoding {encoding}: {str(e)}")
-						continue
+				# Afficher les colonnes détectées pour vérification
+				with st.expander("📊 Colonnes détectées dans le fichier STBAN", expanded=False):
+					col1, col2 = st.columns(2)
+					
+					with col1:
+						st.write("**Colonnes disponibles :**")
+						for i, col in enumerate(stban_df.columns[:len(stban_df.columns)//2], 1):
+							if 'PRISE' in col.upper():
+								st.success(f"{i}. ✅ {col}")
+							elif 'PTO' in col.upper():
+								st.info(f"{i}. ⚡ {col}")
+							else:
+								st.text(f"{i}. {col}")
+					
+					with col2:
+						for i, col in enumerate(stban_df.columns[len(stban_df.columns)//2:], len(stban_df.columns)//2 + 1):
+							if 'PRISE' in col.upper():
+								st.success(f"{i}. ✅ {col}")
+							elif 'PTO' in col.upper():
+								st.info(f"{i}. ⚡ {col}")
+							else:
+								st.text(f"{i}. {col}")
+					
+					# Vérification des colonnes importantes
+					st.markdown("---")
+					prise_cols = [col for col in stban_df.columns if 'PRISE' in col.upper()]
+					pto_cols = [col for col in stban_df.columns if 'PTO' in col.upper()]
+					
+					if prise_cols:
+						st.success(f"✅ Colonne(s) PRISE trouvée(s): {', '.join(prise_cols)}")
+					else:
+						st.warning("⚠️ Aucune colonne contenant 'PRISE' détectée")
+						st.info("💡 Assurez-vous que les colonnes REF_PBO_PRISE et REF_PBO_PTO existent dans votre fichier")
+					
+					if pto_cols:
+						st.success(f"⚡ Colonne(s) PTO trouvée(s): {', '.join(pto_cols)}")
+					else:
+						st.warning("⚠️ Aucune colonne contenant 'PTO' détectée")
 				
-				if stban_df is None:
-					st.error("⚠️ Impossible de lire le fichier avec ces paramètres. Essayez d'autres options.")
+				# Afficher un aperçu des données
+				with st.expander("📊 Aperçu des données STBAN (5 premières lignes)", expanded=False):
+					# Afficher seulement les colonnes pertinentes si elles existent
+					cols_to_show = []
+					for col in stban_df.columns:
+						if any(keyword in col.upper() for keyword in ['PRISE', 'PTO', 'REF', 'PBO', 'SITE', 'BOITE']):
+							cols_to_show.append(col)
+					
+					if cols_to_show:
+						st.dataframe(stban_df[cols_to_show].head(5))
+					else:
+						st.dataframe(stban_df.head(5))
+				
+				# Mode debug global pour STBAN (optionnel)
+				if st.checkbox("🔧 Activer le mode debug global STBAN", value=False):
+					st.info("Mode debug activé - Les détails du calcul s'afficheront lors de la recherche")
 			
-			# Chargement automatique par défaut (première tentative)
-			if stban_df is None:
-				stban_file.seek(0)
-				try:
-					# Tentative de chargement automatique standard
-					stban_df = pd.read_csv(stban_file, sep=';', encoding='utf-8')
-					if len(stban_df.columns) <= 1:
-						stban_file.seek(0)
-						stban_df = pd.read_csv(stban_file, sep=',', encoding='utf-8')
-					
-					if len(stban_df.columns) > 1:
-						st.warning("⚠️ Chargement automatique effectué, mais vérifiez les colonnes ci-dessus.")
-						st.info("💡 Si les colonnes semblent incorrectes, utilisez les paramètres manuels.")
-				except:
-					pass
-					
 		except Exception as e:
-			st.error(f"⚠️ Erreur lors du chargement: {str(e)}")
+			st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
+			st.info("💡 Vérifiez que votre fichier est un Excel valide (.xlsx ou .xls)")
 			stban_df = None
 					
 	if uploaded_file is not None:
@@ -1340,6 +1281,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
