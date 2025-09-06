@@ -494,7 +494,7 @@ def calculate_prises_count_optimized(optimized_df, boite_name):
     # 3. Dans PRISE avec autre PTO
     count_prise_autre_pto = np.sum(is_prise & pto_not_empty & ~is_pto)
     
-    return max(int(count_prise), int(count_prise + count_pto_only - count_prise_autre_pto))
+    return min(int(count_prise), int(count_prise + count_pto_only - count_prise_autre_pto))
 
 # Fonction wrapper qui utilise le cache
 def calculate_prises_count(stban_df, boite_name):
@@ -1257,6 +1257,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
