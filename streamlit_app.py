@@ -757,165 +757,165 @@ def display_segment_condensed_with_colors(segment, index):
 
 # Interface principale
 def main():
-    # Header amélioré avec logo
-    try:
-        # Essayer de charger le logo depuis la racine
-        logo_base64 = get_base64_of_bin_file('./logo-ICT-group.png')
-        logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="ICT Group Logo">'
-    except:
-        # Fallback si le logo n'est pas trouvé
-        logo_html = '<div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔌</div>'
-    
-    st.markdown(f"""
-    <div class="app-header fade-in">
-        <div class="logo-container">
-            {logo_html}
-        </div>
-        <div class="header-content">
-            <h1>Route Optique ICT</h1>
-            <p>Analyse avancée des infrastructures optiques</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+	# Header amélioré avec logo
+	try:
+		# Essayer de charger le logo depuis la racine
+		logo_base64 = get_base64_of_bin_file('./logo-ICT-group.png')
+		logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="ICT Group Logo">'
+	except:
+		# Fallback si le logo n'est pas trouvé
+		logo_html = '<div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔌</div>'
 
-    # Upload de fichier avec design amélioré
-    st.markdown('<div class="upload-container fade-in">', unsafe_allow_html=True)
-    st.markdown("### 📊 Charger votre fichier Excel")
-    
-    uploaded_file = st.file_uploader(
-        "Sélectionnez un fichier Excel (.xlsx, .xls)",
-        type=['xlsx', 'xls']
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+	st.markdown(f"""
+	<div class="app-header fade-in">
+		<div class="logo-container">
+			{logo_html}
+		</div>
+		<div class="header-content">
+			<h1>Route Optique ICT</h1>
+			<p>Analyse avancée des infrastructures optiques</p>
+		</div>
+	</div>
+	""", unsafe_allow_html=True)
 
-    if uploaded_file is not None:
-        try:
-            # Charger le fichier Excel avec gestion d'erreurs améliorée
-            try:
-                # Essayer d'abord avec openpyxl (pour .xlsx)
-                df = pd.read_excel(uploaded_file, engine='openpyxl')
-            except Exception as e1:
-                try:
-                    # Fallback sur xlrd (pour .xls)
-                    df = pd.read_excel(uploaded_file, engine='xlrd')
-                except Exception as e2:
-                    try:
-                        # Dernière tentative sans spécifier d'engine
-                        df = pd.read_excel(uploaded_file)
-                    except Exception as e3:
-                        st.error(f"❌ Impossible de lire le fichier Excel: {str(e3)}")
-                        st.info("💡 Vérifiez que votre fichier est un Excel valide (.xlsx ou .xls)")
-                        return
-            
-            # Interface de recherche simplifiée
-            st.markdown('<div class="search-container fade-in">', unsafe_allow_html=True)
-            st.markdown("### 🔍 Recherche")
-            
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                search_term = st.text_input(
-                    "",
-                    placeholder="🔍 Saisir un code, référence, ou identifiant..."
-                )
-            
-            with col2:
-                search_button = st.button("🔍 Rechercher", type="primary")
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Recherche
-            if search_term or search_button:
-                if search_term:
-                    # Recherche dans toutes les colonnes
-                    mask = df.astype(str).apply(lambda x: x.str.contains(search_term, case=False, na=False)).any(axis=1)
-                    results = df[mask]
-                    
-                    if len(results) > 0:
-                        st.markdown(f"### 📋 {len(results)} résultat(s) trouvé(s)")
-                        
-                        # Afficher les résultats
-                        for idx, (_, row) in enumerate(results.head(10).iterrows()):
-                            
-                            # Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité (DERNIÈRES valeurs)
-                            # tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
+	# Upload de fichier avec design amélioré
+	st.markdown('<div class="upload-container fade-in">', unsafe_allow_html=True)
+	st.markdown("### 📊 Charger votre fichier Excel")
+
+	uploaded_file = st.file_uploader(
+		"Sélectionnez un fichier Excel (.xlsx, .xls)",
+		type=['xlsx', 'xls']
+	)
+	st.markdown('</div>', unsafe_allow_html=True)
+
+	if uploaded_file is not None:
+		try:
+			# Charger le fichier Excel avec gestion d'erreurs améliorée
+			try:
+				# Essayer d'abord avec openpyxl (pour .xlsx)
+				df = pd.read_excel(uploaded_file, engine='openpyxl')
+			except Exception as e1:
+				try:
+					# Fallback sur xlrd (pour .xls)
+					df = pd.read_excel(uploaded_file, engine='xlrd')
+				except Exception as e2:
+					try:
+						# Dernière tentative sans spécifier d'engine
+						df = pd.read_excel(uploaded_file)
+					except Exception as e3:
+						st.error(f"❌ Impossible de lire le fichier Excel: {str(e3)}")
+						st.info("💡 Vérifiez que votre fichier est un Excel valide (.xlsx ou .xls)")
+						return
+			
+			# Interface de recherche simplifiée
+			st.markdown('<div class="search-container fade-in">', unsafe_allow_html=True)
+			st.markdown("### 🔍 Recherche")
+			
+			col1, col2 = st.columns([3, 1])
+			with col1:
+				search_term = st.text_input(
+					"",
+					placeholder="🔍 Saisir un code, référence, ou identifiant..."
+				)
+			
+			with col2:
+				search_button = st.button("🔍 Rechercher", type="primary")
+			
+			st.markdown('</div>', unsafe_allow_html=True)
+			
+			# Recherche
+			if search_term or search_button:
+				if search_term:
+					# Recherche dans toutes les colonnes
+					mask = df.astype(str).apply(lambda x: x.str.contains(search_term, case=False, na=False)).any(axis=1)
+					results = df[mask]
+					
+					if len(results) > 0:
+						st.markdown(f"### 📋 {len(results)} résultat(s) trouvé(s)")
+						
+						# Afficher les résultats
+						for idx, (_, row) in enumerate(results.head(10).iterrows()):
+							
+							# Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité (DERNIÈRES valeurs)
+							# tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
 							tiroir, pos = get_tiroir_pos(row, df)
-                            # pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
-                            
-                            # Récupérer tube et fibre du PBO extrémité (dernières informations)
-                            pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, df)
-                            
-                            # Construire l'identifiant
-                            base_id = f"{tiroir}P{pos}"
-                            if pbo_tube and pbo_fibre:
-                                try:
-                                    tube_int = int(float(pbo_tube))
-                                    fibre_int = int(float(pbo_fibre))
-                                    full_id = f"{base_id} - T{tube_int}F{fibre_int}"
-                                except ValueError:
-                                    full_id = f"{base_id} - T{pbo_tube}F{pbo_fibre}"
-                            elif pbo_tube:
-                                try:
-                                    tube_int = int(float(pbo_tube))
-                                    full_id = f"{base_id} - T{tube_int}"
-                                except ValueError:
-                                    full_id = f"{base_id} - T{pbo_tube}"
-                            elif pbo_fibre:
-                                try:
-                                    fibre_int = int(float(pbo_fibre))
-                                    full_id = f"{base_id} - F{fibre_int}"
-                                except ValueError:
-                                    full_id = f"{base_id} - F{pbo_fibre}"
-                            else:
-                                full_id = base_id
-                            
-                            with st.expander(f"🔍 {full_id}", expanded=False):
-                                
-                                # Informations générales avec design amélioré
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    if len(row) > 0:
-                                        st.markdown(f"""
-                                        <div class="metric-container">
-                                            <div class="metric-label">🏠 Tiroir</div>
-                                            <div class="metric-value">{str(row.iloc[0]) if pd.notna(row.iloc[0]) else "N/A"}</div>
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                with col2:
-                                    if len(row) > 1:
-                                        st.markdown(f"""
-                                        <div class="metric-container">
-                                            <div class="metric-label">📍 Position</div>
-                                            <div class="metric-value">{str(row.iloc[1]) if pd.notna(row.iloc[1]) else "N/A"}</div>
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                
-                                # Extraire et afficher les segments en format condensé avec couleurs
-                                segments = extract_route_segments(row, df)
-                                
-                                if segments:
-                                    st.markdown("#### 🗺️ Route Détaillée (Format Condensé avec Couleurs)")
-                                    for i, segment in enumerate(segments):
-                                        display_segment_condensed_with_colors(segment, i)
-                                else:
-                                    st.info("ℹ️ Aucun segment de route détaillé trouvé pour cette ligne")
-                                    
-                                    # Afficher les données brutes si pas de segments
-                                    st.markdown("**📄 Données de la ligne :**")
-                                    for i, value in enumerate(row):
-                                        if pd.notna(value) and str(value).strip():
-                                            col_name = df.columns[i] if i < len(df.columns) else f"Col {i+1}"
-                                            st.text(f"{col_name}: {value}")
-                        
-                        if len(results) > 10:
-                            st.info(f"ℹ️ Affichage des 10 premiers résultats sur {len(results)} trouvés")
-                            
-                    else:
-                        st.warning(f"❌ Aucun résultat trouvé pour '{search_term}'")
-                        st.info("💡 Essayez avec un terme de recherche différent ou plus court")
-                
-        except Exception as e:
-            st.error(f"❌ Erreur lors du chargement du fichier: {str(e)}")
-            st.info("💡 Vérifiez que votre fichier Excel est valide et n'est pas protégé par mot de passe")
+							# pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
+							
+							# Récupérer tube et fibre du PBO extrémité (dernières informations)
+							pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, df)
+							
+							# Construire l'identifiant
+							base_id = f"{tiroir}P{pos}"
+							if pbo_tube and pbo_fibre:
+								try:
+									tube_int = int(float(pbo_tube))
+									fibre_int = int(float(pbo_fibre))
+									full_id = f"{base_id} - T{tube_int}F{fibre_int}"
+								except ValueError:
+									full_id = f"{base_id} - T{pbo_tube}F{pbo_fibre}"
+							elif pbo_tube:
+								try:
+									tube_int = int(float(pbo_tube))
+									full_id = f"{base_id} - T{tube_int}"
+								except ValueError:
+									full_id = f"{base_id} - T{pbo_tube}"
+							elif pbo_fibre:
+								try:
+									fibre_int = int(float(pbo_fibre))
+									full_id = f"{base_id} - F{fibre_int}"
+								except ValueError:
+									full_id = f"{base_id} - F{pbo_fibre}"
+							else:
+								full_id = base_id
+							
+							with st.expander(f"🔍 {full_id}", expanded=False):
+								
+								# Informations générales avec design amélioré
+								col1, col2 = st.columns(2)
+								with col1:
+									if len(row) > 0:
+										st.markdown(f"""
+										<div class="metric-container">
+											<div class="metric-label">🏠 Tiroir</div>
+											<div class="metric-value">{str(row.iloc[0]) if pd.notna(row.iloc[0]) else "N/A"}</div>
+										</div>
+										""", unsafe_allow_html=True)
+								with col2:
+									if len(row) > 1:
+										st.markdown(f"""
+										<div class="metric-container">
+											<div class="metric-label">📍 Position</div>
+											<div class="metric-value">{str(row.iloc[1]) if pd.notna(row.iloc[1]) else "N/A"}</div>
+										</div>
+										""", unsafe_allow_html=True)
+								
+								# Extraire et afficher les segments en format condensé avec couleurs
+								segments = extract_route_segments(row, df)
+								
+								if segments:
+									st.markdown("#### 🗺️ Route Détaillée (Format Condensé avec Couleurs)")
+									for i, segment in enumerate(segments):
+										display_segment_condensed_with_colors(segment, i)
+								else:
+									st.info("ℹ️ Aucun segment de route détaillé trouvé pour cette ligne")
+									
+									# Afficher les données brutes si pas de segments
+									st.markdown("**📄 Données de la ligne :**")
+									for i, value in enumerate(row):
+										if pd.notna(value) and str(value).strip():
+											col_name = df.columns[i] if i < len(df.columns) else f"Col {i+1}"
+											st.text(f"{col_name}: {value}")
+						
+						if len(results) > 10:
+							st.info(f"ℹ️ Affichage des 10 premiers résultats sur {len(results)} trouvés")
+							
+					else:
+						st.warning(f"❌ Aucun résultat trouvé pour '{search_term}'")
+						st.info("💡 Essayez avec un terme de recherche différent ou plus court")
+				
+		except Exception as e:
+			st.error(f"❌ Erreur lors du chargement du fichier: {str(e)}")
+			st.info("💡 Vérifiez que votre fichier Excel est valide et n'est pas protégé par mot de passe")
 
 if __name__ == "__main__":
     main()
