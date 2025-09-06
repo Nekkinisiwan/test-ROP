@@ -877,7 +877,7 @@ def main():
 										st.markdown(f"""
 										<div class="metric-container">
 											<div class="metric-label">🏠 Tiroir</div>
-											<div class="metric-value">{str(row.iloc[0]) if pd.notna(row.iloc[0]) else "N/A"}</div>
+											<div class="metric-value">{tiroir}</div>
 										</div>
 										""", unsafe_allow_html=True)
 								with col2:
@@ -885,7 +885,7 @@ def main():
 										st.markdown(f"""
 										<div class="metric-container">
 											<div class="metric-label">📍 Position</div>
-											<div class="metric-value">{str(row.iloc[1]) if pd.notna(row.iloc[1]) else "N/A"}</div>
+											<div class="metric-value">{pos}</div>
 										</div>
 										""", unsafe_allow_html=True)
 								
@@ -919,3 +919,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
