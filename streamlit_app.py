@@ -1127,15 +1127,15 @@ def main():
 				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
 					found_column_name = None
-					for col in df.columns:
-						if df[col].astype(str).str.contains(str(selected_value)).any():
-							st.write(col)
-							found_column_name = col
-							break
-					
-						if found_column_name is None:
-							return None
+					found_column_name = df.columns[np.any(df == selected_value, axis=0)][0]
+					#for col in df.columns:
+						#if df[col].astype(str).str.contains(str(selected_value)).any():
+							#found_column_name = col
+							#break
 					st.write(found_column_name)
+					if found_column_name is None:
+						return None
+
 					col_index = df.columns.get_loc(found_column_name)
 					target_col_index = col_index + 2
 				
@@ -1143,7 +1143,7 @@ def main():
 						return None
 				
 					target_column_name = df.columns[target_col_index]
-					st.write(target_column_name)
+
 					results = df[(df[found_column_name] == selected_value) & (df[target_column_name] == 'STOCKEE')]	
 					
 					if len(results) > 0:
@@ -1254,6 +1254,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
