@@ -1142,7 +1142,7 @@ def main():
 						return None
 				
 					target_column_name = df.columns[target_col_index]
-				
+					st.write(target_column_name)
 					results = df[(df[found_column_name] == selected_value) & (df[target_column_name] == 'STOCKEE')]	
 					
 					if len(results) > 0:
@@ -1253,4 +1253,5 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
