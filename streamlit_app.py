@@ -750,7 +750,7 @@ def display_segment_condensed_with_colors(segment, index, cumul_longueur=None):
 	"""Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml Boite T1 F1 STATUS"""
 	
 	# Construire le nom du câble avec capacité et longueur
-	cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'], cumul_longueur)
+	cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'], cumul_longueur[index])
 	
 	# Construire les éléments HTML
 	elements = []
@@ -998,6 +998,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
