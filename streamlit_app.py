@@ -967,11 +967,12 @@ def main():
 									
 									# Calculer les cumuls de longueurs
 									cumulative_lengths = calculate_cumulative_lengths(segments)
+									st.write(cumulative_lengths)
 									
 									# Afficher chaque segment avec son cumul
 									for i, segment in enumerate(segments):
 										cumul = cumulative_lengths[i] if i < len(cumulative_lengths) else None
-									
+										
 									for i, segment in enumerate(segments):
 										display_segment_condensed_with_colors(segment, i, cumul)
 								else:
@@ -997,6 +998,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
