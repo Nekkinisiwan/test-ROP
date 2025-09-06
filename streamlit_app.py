@@ -1133,15 +1133,9 @@ def main():
 					column_indices = np.where(mask.any(axis=0))[0]
 
 					col_index = column_indices[0] if len(column_indices) > 0 else None
-					target_col_index = col_index + 2
-				
-					if target_col_index >= len(df.columns):
-						return None
-				
-					target_column_name = df.columns[target_col_index]
-
-					results = df[(df.iloc[:, first_column_index] == selected_value) &
-					    (df.iloc[:, first_column_index + 2] == "STOCKEE")
+					
+					results = df[(df.iloc[:, col_index] == selected_value) &
+					    (df.iloc[:, col_index + 2] == "STOCKEE")
 					]
 					
 					if len(results) > 0:
@@ -1252,6 +1246,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
