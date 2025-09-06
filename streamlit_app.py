@@ -837,8 +837,9 @@ def main():
                         for idx, (_, row) in enumerate(results.head(10).iterrows()):
                             
                             # Formater l'identifiant: Tiroir + P + pos + tube + fibre du PBO extrémité (DERNIÈRES valeurs)
-                            tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
-                            pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
+                            # tiroir = str(row.iloc[0]) if len(row) > 0 and pd.notna(row.iloc[0]) else "N/A"
+							tiroir, pos = get_tiroir_pos(row, df)
+                            # pos = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else "N/A"
                             
                             # Récupérer tube et fibre du PBO extrémité (dernières informations)
                             pbo_tube, pbo_fibre = get_pbo_tube_fiber(row, df)
