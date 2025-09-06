@@ -1128,9 +1128,9 @@ def main():
 					# Recherche dans toutes les colonnes
 					# Convertir en chaîne pour le filtrage texte
 					df_str = df.astype(str)
-	
+					
 					# Filtrer pour les lignes où la valeur recherchée apparaît quelque part
-					mask1 = df.astype(str).apply(lambda x: x.str.contains(selected_value, case=False, na=False)).any(axis=1)
+					mask1 = df_str.apply(lambda x: x.str.contains(selected_value, case=False, na=False)).any(axis=1)
 
 					# DataFrame filtré avec ces lignes
 					df_filtered = df[mask1]
@@ -1264,6 +1264,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
