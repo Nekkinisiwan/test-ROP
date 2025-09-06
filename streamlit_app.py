@@ -206,6 +206,7 @@ st.markdown("""
 	.k7-badge-condensed {
         background-color: #000000;
         color: #ffffff;
+		border-color: #9ca3af;
     }
 	
     /* Status badges personnalisés */
@@ -942,5 +943,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
