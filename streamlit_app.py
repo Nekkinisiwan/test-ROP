@@ -1126,13 +1126,20 @@ def main():
 			if (selected_value and selected_value != '') or search_button:
 				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
-					found_column_name = None
-					found_column_name = df.columns[np.any(df == selected_value, axis=0)][0]
+
+					# Find boolean mask where value appears
+					mask = df == valeur_recherchée
+					# Find column indices where the value exists (True)
+					column_indices = np.where(mask.any(axis=0))[0]
+					st.write(column_indices)
+
+
+					
 					#for col in df.columns:
 						#if df[col].astype(str).str.contains(str(selected_value)).any():
 							#found_column_name = col
 							#break
-					st.write(found_column_name)
+					
 					if found_column_name is None:
 						return None
 
@@ -1254,6 +1261,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
