@@ -1049,7 +1049,7 @@ def main():
 			if (selected_value and selected_value != '') or search_button:
 				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
-					mask = df.astype(str).apply(lambda x: x.str.contains(search_term, case=False, na=False)).any(axis=1)
+					mask = df.astype(str).apply(lambda x: x.str.contains(selected_value, case=False, na=False)).any(axis=1)
 					results = df[mask]
 					
 					if len(results) > 0:
@@ -1160,6 +1160,7 @@ def main():
 		st.info("👆 Veuillez charger un fichier Excel Route Optique pour commencer l'analyse")
 if __name__ == "__main__":
     main()
+
 
 
 
