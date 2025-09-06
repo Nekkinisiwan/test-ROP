@@ -1151,7 +1151,7 @@ def main():
 					
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
-						results_title = f"### 📋 {len(results)} résultat(s) trouvé(s) pour '{selected_value}'"
+						results_title = f"### 📋 {len(results)} ROP pour {selected_value}"
 	
 						# Calculer le nombre de prises si STBAN est chargé et mode boîte
 						prises_count_display = ""
@@ -1257,4 +1257,5 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
