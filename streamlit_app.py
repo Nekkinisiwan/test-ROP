@@ -1128,7 +1128,7 @@ def main():
 					# Recherche dans toutes les colonnes
 
 					# Find boolean mask where value appears
-					mask = df == valeur_recherchée
+					mask = df == selected_value
 					# Find column indices where the value exists (True)
 					column_indices = np.where(mask.any(axis=0))[0]
 					st.write(column_indices)
@@ -1261,6 +1261,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
