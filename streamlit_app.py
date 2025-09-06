@@ -456,7 +456,7 @@ def find_column_by_name(df, possible_names):
 def extract_route_segments(row, df):
 	"""Extrait les segments de route d'une ligne en se basant sur les noms d'entêtes"""
 	segments = []
-
+	
 	# Définir les noms possibles pour chaque type de colonne
 	cable_names = ['cable', 'câble', 'Cable', 'Câble', 'CABLE', 'CÂBLE']
 	capacite_names = ['capacité', 'capacite', 'Capacité', 'Capacite', 'CAPACITÉ', 'CAPACITE', 'capacity']
@@ -466,7 +466,7 @@ def extract_route_segments(row, df):
 	boite_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE', 'box', 'Box']
 	etat_names = ['etat', 'état', 'Etat', 'État', 'ETAT', 'ÉTAT', 'state', 'State', 'STATUS', 'status']
 	k7_names = ['k7', 'K7', 'Cassette', 'CASSETTE', 'cassette']
-
+	
 	# Identifier toutes les colonnes de chaque type
 	cable_cols = []
 	capacite_cols = []
@@ -476,13 +476,13 @@ def extract_route_segments(row, df):
 	boite_cols = []
 	etat_cols = []
 	k7_cols = []
-
+	
 	# Vérifier si la colonne 3 (index 2) a pour nom "k7"
-    ignore_col3_k7 = False
-    if len(df.columns) > 2:  # S'assurer que la colonne 3 existe
-        col3_name = df.columns[2].lower().strip()
-        if col3_name == 'k7':
-            ignore_col3_k7 = True
+	ignore_col3_k7 = False
+	if len(df.columns) > 2:  # S'assurer que la colonne 3 existe
+		col3_name = df.columns[2].lower().strip()
+		if col3_name == 'k7':
+			ignore_col3_k7 = True
 			
 	for i, col in enumerate(df.columns[1:], start=1):  # Commencer à partir de la colonne 1 (index 1)
 		col_lower = col.lower().strip()
@@ -531,20 +531,20 @@ def extract_route_segments(row, df):
 				break
 		
 		# Vérifier si c'est une colonne K7 - AVEC LOGIQUE SPÉCIALE
-        for k7_name in k7_names:
-            if k7_name.lower() in col_lower:
-                # Si c'est la colonne 3 (index 2) ET que ignore_col3_k7 est True, ignorer
-                if i == 2 and ignore_col3_k7:  # i=2 correspond à l'index 2 (colonne 3)
-                    continue  # Ignorer cette colonne K7
-                else:
-                    k7_cols.append(col)  # Ajouter cette colonne K7
-                break
+		for k7_name in k7_names:
+			if k7_name.lower() in col_lower:
+				# Si c'est la colonne 3 (index 2) ET que ignore_col3_k7 est True, ignorer
+				if i == 2 and ignore_col3_k7:  # i=2 correspond à l'index 2 (colonne 3)
+					continue  # Ignorer cette colonne K7
+				else:
+					k7_cols.append(col)  # Ajouter cette colonne K7
+				break
 				
 	# Créer des segments basés sur le nombre de colonnes trouvées
 	max_segments = max(len(cable_cols), len(capacite_cols), len(longueur_cols), 
 					   len(tube_cols), len(fibre_cols), len(boite_cols), 
 					   len(etat_cols), len(k7_cols))
-
+	
 	for i in range(max_segments):
 		cable = ''
 		capacite = ''
@@ -596,7 +596,7 @@ def extract_route_segments(row, df):
 				'k7': k7
 			}
 			segments.append(segment)
-
+	
 	return segments
 
 def get_tiroir_pos(row, df):
@@ -958,6 +958,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
