@@ -689,32 +689,32 @@ def get_pbo_tube_fiber(row, df):
     return tube, fibre
 
 def format_cable_name_with_capacity_and_length(cable, capacite, longueur, cumul_longueur=None):
-    """Formate le nom du câble avec sa capacité FO et longueur ml selon le format demandé"""
-    if not cable and not capacite and not longueur:
-        return ""
-    
-    # Commencer par le nom du câble ou un nom par défaut
-    if cable:
-        result = cable
-    else:
-        result = "Cable"
-    
-    # Ajouter la capacité avec FO
-    if capacite:
-        try:
-            cap_int = int(float(capacite))
-            result += f"_{cap_int}FO"
-        except ValueError:
-            result += f"_{capacite}FO"
-    
-    # Ajouter la longueur avec ml
-    if longueur:
-        try:
-            long_int = int(float(longueur))
-            result += f" / {long_int}ml"
-        except ValueError:
-            result += f" / {longueur}ml"
-
+	"""Formate le nom du câble avec sa capacité FO et longueur ml selon le format demandé"""
+	if not cable and not capacite and not longueur:
+		return ""
+	
+	# Commencer par le nom du câble ou un nom par défaut
+	if cable:
+		result = cable
+	else:
+		result = "Cable"
+	
+	# Ajouter la capacité avec FO
+	if capacite:
+		try:
+			cap_int = int(float(capacite))
+			result += f"_{cap_int}FO"
+		except ValueError:
+			result += f"_{capacite}FO"
+	
+	# Ajouter la longueur avec ml
+	if longueur:
+		try:
+			long_int = int(float(longueur))
+			result += f" / {long_int}ml"
+		except ValueError:
+			result += f" / {longueur}ml"
+	
 	# Ajouter le cumul des longueurs entre parenthèses si fourni
 	if cumul_longueur is not None:
 		try:
@@ -723,49 +723,49 @@ def format_cable_name_with_capacity_and_length(cable, capacite, longueur, cumul_
 		except ValueError:
 			result += f" ({cumul_longueur}ml)"
 			
-    return result
+	return result
 
 def calculate_cumulative_lengths(segments):
-    """Calcule le cumul des longueurs pour chaque segment"""
-    cumulative_lengths = []
-    cumul = 0
-    
-    for segment in segments:
-        longueur = segment.get('longueur', '')
-        if longueur:
-            try:
-                long_value = float(longueur)
-                cumul += long_value
-                cumulative_lengths.append(cumul)
-            except ValueError:
-                # Si la longueur n'est pas numérique, on garde le cumul précédent
-                cumulative_lengths.append(cumul if cumul > 0 else None)
-        else:
-            # Pas de longueur pour ce segment
-            cumulative_lengths.append(cumul if cumul > 0 else None)
-    
-    return cumulative_lengths
+	"""Calcule le cumul des longueurs pour chaque segment"""
+	cumulative_lengths = []
+	cumul = 0
+	
+	for segment in segments:
+		longueur = segment.get('longueur', '')
+		if longueur:
+			try:
+				long_value = float(longueur)
+				cumul += long_value
+				cumulative_lengths.append(cumul)
+			except ValueError:
+				# Si la longueur n'est pas numérique, on garde le cumul précédent
+				cumulative_lengths.append(cumul if cumul > 0 else None)
+		else:
+			# Pas de longueur pour ce segment
+			cumulative_lengths.append(cumul if cumul > 0 else None)
+	
+	return cumulative_lengths
 	
 def display_segment_condensed_with_colors(segment, index, cumul_longueur=None):
 	"""Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml Boite T1 F1 STATUS"""
-
+	
 	# Construire le nom du câble avec capacité et longueur
 	cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'], cumul_longueur)
-
+	
 	# Construire les éléments HTML
 	elements = []
-
+	
 	# 1. Nom du câble
 	if cable_name:
 		elements.append(f'<div class="cable-name-condensed">{cable_name}</div>')
-
+	
 	# 2. Groupe des autres éléments (boite, tube, fibre, statut)
 	group_elements = []
-
+	
 	# 3. Boite
 	if segment['boite']:
 		group_elements.append(f'<div class="boite-badge-condensed">{segment["boite"]}</div>')
-
+	
 	# 4. Tube coloré
 	if segment['tube']:
 		try:
@@ -782,7 +782,7 @@ def display_segment_condensed_with_colors(segment, index, cumul_longueur=None):
 				f'<div class="tube-badge-condensed" style="background-color: #9ca3af; '
 				f'color: white; border-color: #9ca3af;">T{segment["tube"]}</div>'
 			)
-
+	
 	# 5. Fibre colorée
 	if segment['fibre']:
 		try:
@@ -799,7 +799,7 @@ def display_segment_condensed_with_colors(segment, index, cumul_longueur=None):
 				f'<div class="fiber-badge-condensed" style="background-color: #9ca3af; '
 				f'color: white; border-color: #9ca3af;">F{segment["fibre"]}</div>'
 			)
-
+	
 	# 7. K7
 	if segment['k7']:
 		group_elements.append(f'<div class="k7-badge-condensed">{segment["k7"]}</div>')
@@ -808,15 +808,15 @@ def display_segment_condensed_with_colors(segment, index, cumul_longueur=None):
 	if segment['etat']:
 		status_class = get_status_class_condensed(segment['etat'])
 		group_elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
-
+	
 	# Assembler le groupe d'éléments
 	if group_elements:
 		group_html = '<div class="elements-group">' + ''.join(group_elements) + '</div>'
 		elements.append(group_html)
-
+	
 	# Assembler tous les éléments
 	content_html = ''.join(elements)
-
+	
 	# Afficher avec unsafe_allow_html=True
 	st.markdown(
 		f'<div class="segment-condensed fade-in">{content_html}</div>',
@@ -833,7 +833,7 @@ def main():
 	except:
 		# Fallback si le logo n'est pas trouvé
 		logo_html = '<div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔌</div>'
-
+	
 	st.markdown(f"""
 	<div class="app-header fade-in">
 		<div class="logo-container">
@@ -845,17 +845,17 @@ def main():
 		</div>
 	</div>
 	""", unsafe_allow_html=True)
-
+	
 	# Upload de fichier avec design amélioré
 	st.markdown('<div class="upload-container fade-in">', unsafe_allow_html=True)
 	st.markdown("### 📊 Charger votre fichier Excel")
-
+	
 	uploaded_file = st.file_uploader(
 		"Sélectionnez un fichier Excel (.xlsx, .xls)",
 		type=['xlsx', 'xls']
 	)
 	st.markdown('</div>', unsafe_allow_html=True)
-
+	
 	if uploaded_file is not None:
 		try:
 			# Charger le fichier Excel avec gestion d'erreurs améliorée
@@ -964,11 +964,11 @@ def main():
 									st.markdown("#### 🗺️ Route Détaillée")
 									
 									# Calculer les cumuls de longueurs
-                                    cumulative_lengths = calculate_cumulative_lengths(segments)
-                                    
-                                    # Afficher chaque segment avec son cumul
-                                    for i, segment in enumerate(segments):
-                                        cumul = cumulative_lengths[i] if i < len(cumulative_lengths) else None
+									cumulative_lengths = calculate_cumulative_lengths(segments)
+									
+									# Afficher chaque segment avec son cumul
+									for i, segment in enumerate(segments):
+										cumul = cumulative_lengths[i] if i < len(cumulative_lengths) else None
 									
 									for i, segment in enumerate(segments):
 										display_segment_condensed_with_colors(segment, i, cumul)
@@ -995,6 +995,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
