@@ -603,11 +603,11 @@ def get_tiroir_pos(row, df):
 			break
 
 	# Fallback sur les premières colonnes si pas trouvé par nom
-	if not tiroir and len(row) > 0 and pd.notna(row.iloc[0]):
-		tiroir = str(row.iloc[0]).strip()
+	# if not tiroir and len(row) > 0 and pd.notna(row.iloc[0]):
+		# tiroir = str(row.iloc[0]).strip()
 		
-	if not pos and len(row) > 1 and pd.notna(row.iloc[1]):
-		pos = str(row.iloc[1]).strip()
+	# if not pos and len(row) > 1 and pd.notna(row.iloc[1]):
+		# pos = str(row.iloc[1]).strip()
 
 	return tiroir, pos
 
