@@ -660,6 +660,13 @@ def extract_route_segments(row, df):
 	
 	return segments
 
+def get_boite_from_segments(segments):
+    """Récupère le nom de la boîte depuis les segments"""
+    for segment in segments:
+        if segment.get('boite'):
+            return segment['boite']
+    return None
+	
 def get_tiroir_pos(row, df):
 	"""Récupère tiroir et position par nom de colonne ou position par défaut"""
 
@@ -1106,6 +1113,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
