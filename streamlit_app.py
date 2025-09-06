@@ -1127,23 +1127,23 @@ def main():
 				if selected_value and selected_value != '':
 					# Recherche dans toutes les colonnes
 					found_column_name = None
-				    for col in df.columns:
-				        if df[col].astype(str).str.contains(str(searched_value)).any():
-				            found_column_name = col
-				            break
+					for col in df.columns:
+						if df[col].astype(str).str.contains(str(searched_value)).any():
+							found_column_name = col
+							break
 					
 						if found_column_name is None:
-				        	return None
+							return None
 					
 					col_index = df.columns.get_loc(found_column_name)
-				    target_col_index = col_index + 2
+					target_col_index = col_index + 2
 				
-				    if target_col_index >= len(df.columns):
-				        return None
+					if target_col_index >= len(df.columns):
+						return None
 				
-				    target_column_name = df.columns[target_col_index]
+					target_column_name = df.columns[target_col_index]
 				
-				    results = df[(df[found_column_name] == searched_value) & (df[target_column_name] == 'STOCKEE')]	
+					results = df[(df[found_column_name] == searched_value) & (df[target_column_name] == 'STOCKEE')]	
 					
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
@@ -1253,43 +1253,3 @@ def main():
 		
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
