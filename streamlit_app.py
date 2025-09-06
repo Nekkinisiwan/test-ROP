@@ -1048,23 +1048,23 @@ def main():
 				
 				# Utiliser la fonction cachée
 				stban_df = load_stban_file(file_content)
-			'''
-			if stban_df is not None and len(stban_df) > 0:
-				st.success(f"✅ Fichier STBAN chargé et mis en cache ({len(stban_df)} lignes)")
+			
+			#if stban_df is not None and len(stban_df) > 0:
+				#st.success(f"✅ Fichier STBAN chargé et mis en cache ({len(stban_df)} lignes)")
 				
 				# Pré-identifier les colonnes
-				prise_col, pto_col = identify_columns(list(stban_df.columns))
+				#prise_col, pto_col = identify_columns(list(stban_df.columns))
 				
-				if prise_col and pto_col:
-					st.success(f"✅ Colonnes identifiées : {prise_col} | {pto_col}")
+				#if prise_col and pto_col:
+					#st.success(f"✅ Colonnes identifiées : {prise_col} | {pto_col}")
 					
 					# Pré-calculer le DataFrame optimisé
-					with st.spinner('⚙️ Optimisation des données pour recherche rapide...'):
-						_ = prepare_stban_for_search(stban_df, prise_col, pto_col)
-						st.success("✅ Données optimisées et mises en cache")
-				else:
-					st.warning("⚠️ Colonnes PRISE/PTO non trouvées")
-			'''
+					#with st.spinner('⚙️ Optimisation des données pour recherche rapide...'):
+						#_ = prepare_stban_for_search(stban_df, prise_col, pto_col)
+						#st.success("✅ Données optimisées et mises en cache")
+				#else:
+					#st.warning("⚠️ Colonnes PRISE/PTO non trouvées")
+			
 		except Exception as e:
 			st.error(f"⚠️ Erreur: {str(e)}")
 			stban_df = None
@@ -1257,3 +1257,4 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
