@@ -1131,19 +1131,8 @@ def main():
 					mask = df == selected_value
 					# Find column indices where the value exists (True)
 					column_indices = np.where(mask.any(axis=0))[0]
-					st.write(column_indices)
 
-
-					
-					#for col in df.columns:
-						#if df[col].astype(str).str.contains(str(selected_value)).any():
-							#found_column_name = col
-							#break
-					
-					if found_column_name is None:
-						return None
-
-					col_index = df.columns.get_loc(found_column_name)
+					col_index = column_indices[0] if len(column_indices) > 0 else None
 					target_col_index = col_index + 2
 				
 					if target_col_index >= len(df.columns):
@@ -1151,7 +1140,9 @@ def main():
 				
 					target_column_name = df.columns[target_col_index]
 
-					results = df[(df[found_column_name] == selected_value) & (df[target_column_name] == 'STOCKEE')]	
+					results = df[(df.iloc[:, first_column_index] == selected_value) &
+					    (df.iloc[:, first_column_index + 2] == "STOCKEE")
+					]
 					
 					if len(results) > 0:
 						# Construire le titre avec le nombre de résultats et éventuellement le nombre de prises
@@ -1261,6 +1252,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
