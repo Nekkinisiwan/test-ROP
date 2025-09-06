@@ -1048,7 +1048,7 @@ def main():
 				
 				# Utiliser la fonction cachée
 				stban_df = load_stban_file(file_content)
-			
+			'''
 			if stban_df is not None and len(stban_df) > 0:
 				st.success(f"✅ Fichier STBAN chargé et mis en cache ({len(stban_df)} lignes)")
 				
@@ -1064,7 +1064,7 @@ def main():
 						st.success("✅ Données optimisées et mises en cache")
 				else:
 					st.warning("⚠️ Colonnes PRISE/PTO non trouvées")
-		
+			'''
 		except Exception as e:
 			st.error(f"⚠️ Erreur: {str(e)}")
 			stban_df = None
@@ -1257,14 +1257,3 @@ def main():
 		
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
