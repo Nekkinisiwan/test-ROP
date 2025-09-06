@@ -1135,7 +1135,7 @@ def main():
 					col_index = column_indices[0] if len(column_indices) > 0 else None
 					
 					results = df[(df.iloc[:, col_index] == selected_value) &
-					    (df.iloc[:, col_index + 2] == "STOCKEE")
+					    (df.iloc[:, col_index + 3] == "STOCKEE")
 					]
 					
 					if len(results) > 0:
@@ -1246,6 +1246,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
