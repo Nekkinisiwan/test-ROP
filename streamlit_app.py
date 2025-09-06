@@ -959,6 +959,8 @@ def main():
 								
 								# Extraire et afficher les segments en format condensé avec couleurs
 								segments = extract_route_segments(row, df)
+
+								cumulative_lengths = []
 								
 								if segments:
 									st.markdown("#### 🗺️ Route Détaillée")
@@ -995,6 +997,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
