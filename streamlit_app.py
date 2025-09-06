@@ -688,7 +688,7 @@ def get_pbo_tube_fiber(row, df):
     
     return tube, fibre
 
-def format_cable_name_with_capacity_and_length(cable, capacite, longueur):
+def format_cable_name_with_capacity_and_length(cable, capacite, longueur, cumul_longueur=None):
     """Formate le nom du câble avec sa capacité FO et longueur ml selon le format demandé"""
     if not cable and not capacite and not longueur:
         return ""
@@ -714,14 +714,43 @@ def format_cable_name_with_capacity_and_length(cable, capacite, longueur):
             result += f" / {long_int}ml"
         except ValueError:
             result += f" / {longueur}ml"
-    
+
+	# Ajouter le cumul des longueurs entre parenthèses si fourni
+	if cumul_longueur is not None:
+		try:
+			cumul_int = int(float(cumul_longueur))
+			result += f" ({cumul_int}ml)"
+		except ValueError:
+			result += f" ({cumul_longueur}ml)"
+			
     return result
 
-def display_segment_condensed_with_colors(segment, index):
+def calculate_cumulative_lengths(segments):
+    """Calcule le cumul des longueurs pour chaque segment"""
+    cumulative_lengths = []
+    cumul = 0
+    
+    for segment in segments:
+        longueur = segment.get('longueur', '')
+        if longueur:
+            try:
+                long_value = float(longueur)
+                cumul += long_value
+                cumulative_lengths.append(cumul)
+            except ValueError:
+                # Si la longueur n'est pas numérique, on garde le cumul précédent
+                cumulative_lengths.append(cumul if cumul > 0 else None)
+        else:
+            # Pas de longueur pour ce segment
+            cumulative_lengths.append(cumul if cumul > 0 else None)
+    
+    return cumulative_lengths
+	
+def display_segment_condensed_with_colors(segment, index, cumul_longueur=None):
 	"""Affiche un segment de route en format condensé avec T et F colorés et boite : Cable_CapacityFO_Lengthml Boite T1 F1 STATUS"""
 
 	# Construire le nom du câble avec capacité et longueur
-	cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'])
+	cable_name = format_cable_name_with_capacity_and_length(segment['cable'], segment['capacite'], segment['longueur'], cumul_longueur)
 
 	# Construire les éléments HTML
 	elements = []
@@ -933,8 +962,16 @@ def main():
 								
 								if segments:
 									st.markdown("#### 🗺️ Route Détaillée")
+									
+									# Calculer les cumuls de longueurs
+                                    cumulative_lengths = calculate_cumulative_lengths(segments)
+                                    
+                                    # Afficher chaque segment avec son cumul
+                                    for i, segment in enumerate(segments):
+                                        cumul = cumulative_lengths[i] if i < len(cumulative_lengths) else None
+									
 									for i, segment in enumerate(segments):
-										display_segment_condensed_with_colors(segment, i)
+										display_segment_condensed_with_colors(segment, i, cumul)
 								else:
 									st.info("ℹ️ Aucun segment de route détaillée trouvé pour cette ligne")
 									
@@ -946,7 +983,7 @@ def main():
 											st.text(f"{col_name}: {value}")
 						
 						if len(results) > 10:
-							st.info(f"ℹ️ Affichage des 10 premiers résultats sur {len(results)} trouvés")
+							st.info(f"ℹ️ Affichage des résultats sur {len(results)} trouvés")
 							
 					else:
 						st.warning(f"❌ Aucun résultat trouvé pour '{search_term}'")
@@ -958,6 +995,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
