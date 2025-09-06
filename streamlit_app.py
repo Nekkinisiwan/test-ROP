@@ -433,62 +433,102 @@ def extract_boite_names_from_df(df):
     
     return sorted(list(boite_names))
 	
+# Mettre en cache les colonnes identifiées pour ne pas les rechercher à chaque fois
+@st.cache_data
+def identify_columns(columns_list):
+    """Identifie les colonnes PRISE et PTO une seule fois"""
+    prise_col = None
+    pto_col = None
+    
+    for col in columns_list:
+        col_upper = col.upper()
+        if not prise_col and 'REF_PBO_PRISE' in col_upper:
+            prise_col = col
+        elif not pto_col and 'REF_PBO_PTO' in col_upper:
+            pto_col = col
+        
+        if prise_col and pto_col:
+            break
+    
+    return prise_col, pto_col
+
+# Mettre en cache le DataFrame préparé
+@st.cache_data
+def prepare_stban_for_search(stban_df, prise_col, pto_col):
+    """Prépare le DataFrame une seule fois avec les colonnes en majuscules"""
+    if stban_df is None or not prise_col or not pto_col:
+        return None
+    
+    # Créer un DataFrame optimisé avec seulement les colonnes nécessaires
+    optimized_df = pd.DataFrame({
+        'PRISE_UPPER': stban_df[prise_col].fillna('').astype(str).str.strip().str.upper(),
+        'PTO_UPPER': stban_df[pto_col].fillna('').astype(str).str.strip().str.upper()
+    })
+    
+    return optimized_df
+
+# Mettre en cache les résultats de calcul
+@st.cache_data
+def calculate_prises_count_optimized(optimized_df, boite_name):
+    """Version optimisée du calcul des prises avec DataFrame pré-traité"""
+    if optimized_df is None or boite_name is None or boite_name == '':
+        return None
+    
+    boite_name_clean = str(boite_name).strip().upper()
+    
+    # Utiliser des opérations vectorisées NumPy pour la vitesse
+    import numpy as np
+    
+    prise_array = optimized_df['PRISE_UPPER'].values
+    pto_array = optimized_df['PTO_UPPER'].values
+    
+    # Calculs vectorisés
+    is_prise = (prise_array == boite_name_clean)
+    is_pto = (pto_array == boite_name_clean)
+    pto_not_empty = (pto_array != '')
+    
+    # 1. Dans PRISE
+    count_prise = np.sum(is_prise)
+    
+    # 2. Dans PTO uniquement
+    count_pto_only = np.sum(is_pto & ~is_prise)
+    
+    # 3. Dans PRISE avec autre PTO
+    count_prise_autre_pto = np.sum(is_prise & pto_not_empty & ~is_pto)
+    
+    return int(count_prise + count_pto_only - count_prise_autre_pto)
+
+# Fonction wrapper qui utilise le cache
 def calculate_prises_count(stban_df, boite_name):
-	"""
-	Calcule le nombre de prises selon la logique métier:
-	- Nombre d'occurrences de boite_name dans REF_PBO_PRISE
-	- PLUS: Occurrences de boite_name dans REF_PBO_PTO qui ne sont pas dans REF_PBO_PRISE
-	- MOINS: Lignes où boite_name est dans REF_PBO_PRISE mais un autre nom est dans REF_PBO_PTO
-	"""
-	if stban_df is None or boite_name is None or boite_name == '':
-		return None
-	
-	# Nettoyer le nom de la boîte pour la recherche
-	boite_name_clean = str(boite_name).strip().upper()
-	
-	# Recherche flexible des colonnes
-	prise_col = None
-	pto_col = None
-	
-	# Chercher les colonnes PRISE et PTO
-	for col in stban_df.columns:
-		col_upper = col.upper()
-		if 'REF_PBO_PRISE' in col_upper:
-			prise_col = col
-		elif 'REF_PBO_PTO' in col_upper:
-			pto_col = col
-	
-	if not prise_col or not pto_col:
-		return None
-	
-	# Créer des colonnes temporaires en majuscules pour la comparaison
-	stban_df_copy = stban_df.copy()
-	stban_df_copy['PRISE_UPPER'] = stban_df_copy[prise_col].fillna('').astype(str).str.strip().str.upper()
-	stban_df_copy['PTO_UPPER'] = stban_df_copy[pto_col].fillna('').astype(str).str.strip().str.upper()
-	
-	# 1. Compter les occurrences dans REF_PBO_PRISE
-	count_prise = (stban_df_copy['PRISE_UPPER'] == boite_name_clean).sum()
-	
-	# 2. Compter les occurrences dans REF_PBO_PTO qui ne sont PAS dans REF_PBO_PRISE
-	mask_pto_only = (
-		(stban_df_copy['PTO_UPPER'] == boite_name_clean) & 
-		(stban_df_copy['PRISE_UPPER'] != boite_name_clean)
-	)
-	count_pto_only = mask_pto_only.sum()
-	
-	# 3. Compter les lignes où boite_name est dans PRISE mais un AUTRE nom est dans PTO
-	mask_prise_autre_pto = (
-		(stban_df_copy['PRISE_UPPER'] == boite_name_clean) & 
-		(stban_df_copy['PTO_UPPER'] != '') & 
-		(stban_df_copy['PTO_UPPER'] != boite_name_clean)
-	)
-	count_prise_autre_pto = mask_prise_autre_pto.sum()
-	
-	# Calcul final
-	total_prises = count_prise + count_pto_only - count_prise_autre_pto
-	
-	return total_prises
-	
+    """Fonction principale qui utilise les versions optimisées"""
+    if stban_df is None:
+        return None
+    
+    # Identifier les colonnes (mis en cache)
+    prise_col, pto_col = identify_columns(list(stban_df.columns))
+    
+    if not prise_col or not pto_col:
+        return None
+    
+    # Préparer le DataFrame (mis en cache)
+    optimized_df = prepare_stban_for_search(stban_df, prise_col, pto_col)
+    
+    # Calculer (mis en cache)
+    return calculate_prises_count_optimized(optimized_df, boite_name)
+
+@st.cache_data(show_spinner=False)
+def load_stban_file(file_content):
+    """Charge le fichier STBAN avec mise en cache"""
+    try:
+        df = pd.read_excel(file_content, engine='openpyxl')
+        return df
+    except:
+        try:
+            df = pd.read_excel(file_content, engine='xlrd')
+            return df
+        except:
+            return pd.read_excel(file_content)
+			
 def get_status_class_condensed(status):
     """Retourne la classe CSS selon le statut pour l'affichage condensé"""
     if not status:
@@ -922,6 +962,24 @@ def display_segment_condensed_with_colors(segment, index, cumul_longueur=None):
 		unsafe_allow_html=True
 	)
 
+@st.cache_data
+def calculate_all_boites_counts(stban_df, boite_names_list):
+    """Calcule les prises pour toutes les boîtes en une fois"""
+    if stban_df is None or not boite_names_list:
+        return {}
+    
+    prise_col, pto_col = identify_columns(list(stban_df.columns))
+    if not prise_col or not pto_col:
+        return {}
+    
+    optimized_df = prepare_stban_for_search(stban_df, prise_col, pto_col)
+    
+    results = {}
+    for boite in boite_names_list:
+        results[boite] = calculate_prises_count_optimized(optimized_df, boite)
+    
+    return results
+	
 # Interface principale
 def main():
 	# Header amélioré avec logo
@@ -972,29 +1030,32 @@ def main():
 	stban_df = None
 	if stban_file is not None:
 		try:
-			# Charger le fichier Excel STBAN
-			try:
-				stban_df = pd.read_excel(stban_file, engine='openpyxl')
-			except:
-				try:
-					stban_df = pd.read_excel(stban_file, engine='xlrd')
-				except:
-					stban_df = pd.read_excel(stban_file)
+			with st.spinner('⏳ Chargement du fichier STBAN (20 Mo)...'):
+				# Lire le contenu du fichier une fois
+				file_content = stban_file.read()
+				stban_file.seek(0)  # Remettre le pointeur au début
+				
+				# Utiliser la fonction cachée
+				stban_df = load_stban_file(file_content)
 			
 			if stban_df is not None and len(stban_df) > 0:
-				st.success(f"✅ Fichier STBAN chargé ({len(stban_df)} lignes)")
+				st.success(f"✅ Fichier STBAN chargé et mis en cache ({len(stban_df)} lignes)")
 				
-				# Vérification rapide des colonnes
-				prise_found = any('PRISE' in col.upper() for col in stban_df.columns)
-				pto_found = any('PTO' in col.upper() for col in stban_df.columns)
+				# Pré-identifier les colonnes
+				prise_col, pto_col = identify_columns(list(stban_df.columns))
 				
-				if not prise_found or not pto_found:
-					st.warning("⚠️ Colonnes PRISE et/ou PTO non détectées. Le calcul des prises pourrait ne pas fonctionner.")
-					with st.expander("📊 Voir les colonnes disponibles"):
-						st.write(list(stban_df.columns))
+				if prise_col and pto_col:
+					st.success(f"✅ Colonnes identifiées : {prise_col} | {pto_col}")
+					
+					# Pré-calculer le DataFrame optimisé
+					with st.spinner('⚙️ Optimisation des données pour recherche rapide...'):
+						_ = prepare_stban_for_search(stban_df, prise_col, pto_col)
+						st.success("✅ Données optimisées et mises en cache")
+				else:
+					st.warning("⚠️ Colonnes PRISE/PTO non trouvées")
 		
 		except Exception as e:
-			st.error(f"⚠️ Erreur lors du chargement du fichier STBAN: {str(e)}")
+			st.error(f"⚠️ Erreur: {str(e)}")
 			stban_df = None
 					
 	if uploaded_file is not None:
@@ -1176,6 +1237,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
