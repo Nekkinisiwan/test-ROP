@@ -758,12 +758,12 @@ def display_segment_condensed_with_colors(segment, index):
 	# 6. Statut coloré
 	if segment['etat']:
 		status_class = get_status_class_condensed(segment['etat'])
-		group_elements.append(f'<div class="boite-badge-condensed">{segment["etat"]}</div>')
+		group_elements.append(f'<div class="{status_class}">{segment["etat"]}</div>')
 
 	# 7. K7
 	if segment['k7']:
 		status_class = get_status_class_condensed(segment['k7'])
-		group_elements.append(f'<div class="{status_class}">{segment["k7"]}</div>')
+		group_elements.append(f'<div class="k7-badge-condensed">{segment["k7"]}</div>')
 		
 	# Assembler le groupe d'éléments
 	if group_elements:
@@ -943,3 +943,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
