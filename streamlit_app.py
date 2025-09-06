@@ -1144,7 +1144,7 @@ def main():
 					column_indices = np.where(mask.any(axis=0))[0]
 
 					col_index = column_indices[0] if len(column_indices) > 0 else None
-					
+					st.write(col_index)
 					results = rop_df[(rop_df.iloc[:, col_index] == selected_value) &
 					    (rop_df.iloc[:, col_index + 3] == "STOCKEE")
 					]
@@ -1257,6 +1257,7 @@ def main():
 		
 if __name__ == "__main__":
     main()
+
 
 
 
