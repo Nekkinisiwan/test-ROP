@@ -543,7 +543,20 @@ def get_all_unique_values(df):
     return sorted([val for val in all_values if val.strip() != ''])
 
 @st.cache_data
-def extract_boite_names_from_df(df):
+def extract_boite_names_from_rop_df(df):
+    """Extrait les noms de boîtes uniques des colonnes 'Boîte' du DataFrame ROP."""
+    boite_names = set()
+    boite_column_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE'] # Noms de colonnes à rechercher
+    for col_idx in range(df.shape[1]): # Itérer sur les indices de colonnes
+        # Vérifier si la première cellule de la colonne correspond à un nom de boîte
+        if pd.notna(df.iloc[0, col_idx]) and str(df.iloc[0, col_idx]).lower().strip() in boite_column_names:
+            # Extraire les valeurs de cette colonne (en ignorant l'en-tête)
+            unique_vals = df.iloc[1:, col_idx].dropna().astype(str).unique()
+            boite_names.update([val.strip() for val in unique_vals if val.strip()])
+    return sorted(list(boite_names))
+
+@st.cache_data
+def extract_stban_boite_names_from_df(df):
     """Extrait tous les noms de boîtes uniques depuis le DataFrame STBAN."""
     boite_names = set()
     boite_column_names = ['boite', 'boîte', 'Boite', 'Boîte', 'BOITE', 'BOÎTE', 'box', 'Box']
@@ -632,16 +645,98 @@ def get_color_from_text(text):
         return '#10b981'  # Green
     return '#64748b'  # Gray
 
+@st.cache_data
+def extract_route_segments(row):
+    """Extrait les segments de route d'une ligne du DataFrame."""
+    segments = []
+    for item in row.dropna():
+        item_str = str(item).strip()
+        if not item_str: continue
+
+        # Regex pour capturer le nom du câble, la longueur du segment et la longueur cumulée
+        # Ex: TE2-CA-0000101_72F0 / 10ml (10ml)
+        cable_match = re.match(r'([A-Z0-9\-]+_\d+F\d*)\s*/\s*(\d+ml)\s*\((\d+ml)\)', item_str)
+        if cable_match:
+            cable_name, segment_length, cumulative_length = cable_match.groups()
+            remaining_text = item_str[cable_match.end():].strip()
+            parts = [p.strip() for p in remaining_text.split(',') if p.strip()]
+            segments.append({
+                'type': 'cable',
+                'name': cable_name,
+                'segment_length': segment_length,
+                'cumulative_length': cumulative_length,
+                'details': parts
+            })
+        else:
+            # Si ce n'est pas un câble, c'est un point de passage (boîte, tiroir, position, etc.)
+            segments.append({
+                'type': 'point',
+                'name': item_str
+            })
+    return segments
+
+@st.cache_data
+def calculate_cumulative_lengths(df):
+    """Calcule les longueurs cumulées pour chaque segment de route."""
+    # Cette fonction est un placeholder si le calcul est déjà fait dans le fichier.
+    # Si le fichier ROP ne contient pas de longueurs cumulées, cette fonction les calculerait.
+    # Pour l'instant, elle retourne le DataFrame tel quel, car les longueurs cumulées sont extraites directement.
+    return df
+
+def display_segment_condensed_with_colors(segment):
+    """Affiche un segment de route de manière condensée avec des badges colorés."""
+    if segment['type'] == 'cable':
+        cable_name = segment['name']
+        segment_length = segment['segment_length']
+        details = segment['details']
+
+        elements_html = f'<div class="cable-name-condensed">{cable_name} ({segment_length})</div>'
+        status_html = ''
+        elements_group = ''
+
+        for part in details:
+            status_class = get_status_class(part)
+            if status_class:
+                status_html += f'<div class="{status_class}">{part}</div>'
+            else:
+                color = get_color_from_text(part)
+                badge_class = 'boite-badge-condensed' if 'BPE' in part or 'CAS' in part else 'tube-badge-condensed'
+                elements_group += f'<span class="{badge_class}" style="background-color: {color}20; color: {color}; border-color: {color};">{part}</span>'
+        
+        if elements_group:
+            elements_html += f'<div class="elements-group">{elements_group}</div>'
+
+        st.markdown(f'<div class="segment-condensed fade-in">{elements_html}{status_html}</div>', unsafe_allow_html=True)
+
+    elif segment['type'] == 'point':
+        point_name = segment['name']
+        # Gérer l'affichage des points comme Tiroir, Position, etc.
+        if 'Tiroir' in point_name or 'Position' in point_name:
+            # Ces éléments sont gérés séparément dans display_detailed_route
+            pass
+        else:
+            # Pour les autres points, on peut les afficher comme un badge simple
+            st.markdown(f'<div class="segment-condensed fade-in"><span class="boite-badge-condensed">{point_name}</span></div>', unsafe_allow_html=True)
+
 def display_detailed_route(row):
-    """Affiche la route détaillée pour une ligne de résultat."""
+    """Affiche la route détaillée pour une ligne de résultat, en utilisant les nouvelles fonctions."""
     # Extraire Tiroir et Position
     tiroir, position = None, None
+    base_id = None # Pour stocker l'identifiant base_id
+
     for item in row.dropna():
         item_str = str(item)
         if 'Tiroir' in item_str:
             tiroir = item_str
         elif 'Position' in item_str:
             position = item_str
+        # Supposons que base_id est la première valeur non-NaN de la ligne qui n'est ni Tiroir ni Position
+        elif base_id is None and 'Tiroir' not in item_str and 'Position' not in item_str:
+            base_id = item_str
+
+    # Afficher l'identifiant base_id en haut
+    if base_id:
+        st.markdown(f'<h3>ROP pour <span class="search-term-highlight">{base_id}</span></h3>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -653,40 +748,10 @@ def display_detailed_route(row):
     
     st.markdown("<h4>Route Détaillée</h4>", unsafe_allow_html=True)
 
-    # Afficher les segments de la route
-    for item in row.dropna():
-        item_str = str(item)
-        if 'Tiroir' in item_str or 'Position' in item_str:
-            continue
+    segments = extract_route_segments(row)
+    for segment in segments:
+        display_segment_condensed_with_colors(segment)
 
-        # Utiliser des expressions régulières pour extraire les informations
-        cable_match = re.search(r'([A-Z0-9\-]+_\d+F\d*)\s*/\s*(\d+ml)\s*\((\d+ml)\)', item_str)
-        
-        elements_html = ''
-        status_html = ''
-        
-        if cable_match:
-            cable_name, length, total_length = cable_match.groups()
-            elements_html += f'<div class="cable-name-condensed">{cable_name} ({length})</div>'
-            remaining_text = item_str[cable_match.end():].strip()
-            parts = [p.strip() for p in remaining_text.split(',')]
-        else:
-            parts = [p.strip() for p in item_str.split(',')]
-
-        elements_group = ''
-        for part in parts:
-            status_class = get_status_class(part)
-            if status_class:
-                status_html = f'<div class="{status_class}">{part}</div>'
-            else:
-                color = get_color_from_text(part)
-                badge_class = 'boite-badge-condensed' if 'BPE' in part or 'CAS' in part else 'tube-badge-condensed'
-                elements_group += f'<span class="{badge_class}" style="background-color: {color}20; color: {color}; border-color: {color};">{part}</span>'
-        
-        if elements_group:
-            elements_html += f'<div class="elements-group">{elements_group}</div>'
-
-        st.markdown(f'<div class="segment-condensed fade-in">{elements_html}{status_html}</div>', unsafe_allow_html=True)
 
 # --- Interface Utilisateur (UI) ---
 
@@ -741,10 +806,10 @@ else:
     # Le fichier STBAN est utilisé pour enrichir cette liste si présent
     if not st.session_state.boite_names or (st.session_state.stban_df is not None and not st.session_state.get("stban_processed", False)):
         # Initialiser boite_names avec les valeurs du fichier ROP
-        st.session_state.boite_names = get_all_unique_values(df)
+        st.session_state.boite_names = extract_boite_names_from_rop_df(df)
         if st.session_state.stban_df is not None:
             # Si le fichier STBAN est chargé, ajouter ses noms de boîtes et supprimer les doublons
-            st.session_state.boite_names.extend(extract_boite_names_from_df(st.session_state.stban_df))
+            st.session_state.boite_names.extend(extract_stban_boite_names_from_df(st.session_state.stban_df))
             st.session_state.boite_names = sorted(list(set(st.session_state.boite_names)))
             st.session_state.stban_processed = True # Marquer que le STBAN a été traité pour les noms de boîtes
         
@@ -756,7 +821,12 @@ else:
         search_term = ''
         if search_mode == "Recherche par boîte":
             if st.session_state.route_optique_df is not None:
-                search_term = st.selectbox("Sélectionnez une boîte", st.session_state.boite_names, key="boite_selectbox", label_visibility="collapsed")
+                # Permettre la saisie partielle et l'autocomplétion
+                search_query = st.text_input("Saisissez une partie du nom de la boîte", key="boite_text_input", label_visibility="collapsed")
+                # Filtrer les suggestions en fonction de la saisie
+                filtered_boite_names = [name for name in st.session_state.boite_names if search_query.lower() in name.lower()]
+                search_term = st.selectbox("Sélectionnez une boîte", filtered_boite_names, key="boite_selectbox", label_visibility="collapsed")
+
                 if st.session_state.stban_df is None:
                     st.info("Le fichier STBAN n'est pas chargé. Le calcul du nombre de prises ne sera pas disponible pour la recherche par boîte.")
             else:
@@ -765,9 +835,12 @@ else:
 
         else:
             # La recherche générale utilise toujours les valeurs uniques du fichier ROP
-            search_term = st.selectbox("Recherche générale", st.session_state.all_unique_values, key="general_search_selectbox", label_visibility="collapsed")
+            search_query = st.text_input("Saisissez une partie de la valeur recherchée", key="general_text_input", label_visibility="collapsed")
+            filtered_all_values = [value for value in st.session_state.all_unique_values if search_query.lower() in value.lower()]
+            search_term = st.selectbox("Sélectionnez une valeur", filtered_all_values, key="general_search_selectbox", label_visibility="collapsed")
 
-        if st.button("Rechercher", type="primary", use_container_width=True) and search_term:
+        # La recherche se déclenche automatiquement si un terme est sélectionné ou saisi
+        if search_term: # Removed the button condition
             st.markdown(f'### Résultats pour : <span class="search-term-highlight">{search_term}</span>', unsafe_allow_html=True)
 
             # Affichage du nombre de prises
@@ -778,12 +851,17 @@ else:
                     st.markdown(f'<div class="prises-badge">🔌 Nombre de prises : <strong>{prises_count}</strong></div>', unsafe_allow_html=True)
             
             # Recherche des ROPs
+            # Recherche des ROPs
+            # La recherche doit se faire sur toutes les colonnes pour trouver le terme
             matching_rows = df[df.apply(lambda row: row.astype(str).str.contains(re.escape(search_term), case=False, na=False).any(), axis=1)]
 
             if not matching_rows.empty:
                 st.success(f"{len(matching_rows)} ROP trouvée(s).")
                 for index, row in matching_rows.iterrows():
-                    expander_title = f"ROP {index + 1} - {row.dropna().iloc[0] if not row.dropna().empty else 'Détails'}"
+                    # Tenter d'extraire le base_id pour le titre de l'expander
+                    # Le base_id est souvent la première valeur non-NaN de la ligne
+                    base_id_for_expander = row.dropna().iloc[0] if not row.dropna().empty else 'Détails'
+                    expander_title = f"ROP {index + 1} - {base_id_for_expander}"
                     with st.expander(expander_title):
                         display_detailed_route(row)
             else:
