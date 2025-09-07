@@ -846,7 +846,7 @@ else:
             st.markdown(f'### Résultats pour : <span class="search-term-highlight">{search_term}</span>', unsafe_allow_html=True)
 
             # Affichage du nombre de prises
-            if st.session_state.stban_df is not None and search_mode == "Recherche par boîte":
+            if st.session_state.stban_df is not None: # Le calcul des prises est toujours lié à la recherche par boîte
                 with st.spinner("Calcul du nombre de prises..."):
                     prises_count = calculate_prises_count(st.session_state.stban_df, search_term)
                 if prises_count is not None:
