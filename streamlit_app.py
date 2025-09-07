@@ -816,31 +816,33 @@ else:
 
     with st.container(border=True):
         st.markdown('## 🔍 Recherche avec autocomplétion')
-        search_mode = st.radio("Mode de recherche", ("Recherche par boîte", "Recherche générale"), horizontal=True, key="search_mode")
-
         search_term = ''
-        if search_mode == "Recherche par boîte":
-            if st.session_state.route_optique_df is not None:
-                # Permettre la saisie partielle et l'autocomplétion
-                search_query = st.text_input("Saisissez une partie du nom de la boîte", key="boite_text_input", label_visibility="collapsed")
-                # Filtrer les suggestions en fonction de la saisie
+        if st.session_state.route_optique_df is not None:
+            st.markdown("<h5>Recherche par boîte</h5>", unsafe_allow_html=True)
+            search_query = st.text_input("Saisissez une partie du nom de la boîte ou sélectionnez dans la liste", key="boite_text_input", label_visibility="collapsed")
+            
+            # Filtrer les suggestions en fonction de la saisie
+            if search_query:
                 filtered_boite_names = [name for name in st.session_state.boite_names if search_query.lower() in name.lower()]
+            else:
+                filtered_boite_names = st.session_state.boite_names
+
+            # Utiliser un selectbox pour la sélection avec les options filtrées
+            # Si la liste filtrée est vide, afficher un message
+            if not filtered_boite_names:
+                st.info("Aucune boîte correspondante trouvée.")
+                search_term = None # Pas de terme de recherche si aucune correspondance
+            else:
                 search_term = st.selectbox("Sélectionnez une boîte", filtered_boite_names, key="boite_selectbox", label_visibility="collapsed")
 
-                if st.session_state.stban_df is None:
-                    st.info("Le fichier STBAN n'est pas chargé. Le calcul du nombre de prises ne sera pas disponible pour la recherche par boîte.")
-            else:
-                st.info("Veuillez charger un fichier Excel Route Optique pour activer la recherche par boîte.")
-                search_term = st.selectbox("Sélectionnez une boîte", ["Veuillez charger un fichier ROP"], key="boite_selectbox", label_visibility="collapsed", disabled=True)
-
+            if st.session_state.stban_df is None:
+                st.info("Le fichier STBAN n'est pas chargé. Le calcul du nombre de prises ne sera pas disponible.")
         else:
-            # La recherche générale utilise toujours les valeurs uniques du fichier ROP
-            search_query = st.text_input("Saisissez une partie de la valeur recherchée", key="general_text_input", label_visibility="collapsed")
-            filtered_all_values = [value for value in st.session_state.all_unique_values if search_query.lower() in value.lower()]
-            search_term = st.selectbox("Sélectionnez une valeur", filtered_all_values, key="general_search_selectbox", label_visibility="collapsed")
+            st.info("Veuillez charger un fichier Excel Route Optique pour activer la recherche.")
+            search_term = st.selectbox("Sélectionnez une boîte", ["Veuillez charger un fichier ROP"], key="boite_selectbox", label_visibility="collapsed", disabled=True)
 
         # La recherche se déclenche automatiquement si un terme est sélectionné ou saisi
-        if search_term: # Removed the button condition
+        if search_term: # Condition pour lancer la recherche
             st.markdown(f'### Résultats pour : <span class="search-term-highlight">{search_term}</span>', unsafe_allow_html=True)
 
             # Affichage du nombre de prises
