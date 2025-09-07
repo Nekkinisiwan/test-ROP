@@ -1,20 +1,3 @@
-
-# app_final_v3.py - Application Route Optique avec Streamlit - Version complète et stylisée
-import streamlit as st
-import pandas as pd
-import numpy as np
-from io import BytesIO
-import base64
-import re
-
-# Configuration de la page
-st.set_page_config(
-    page_title="Route Optique ICT",
-    page_icon="🔌",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
 # --- Fonctions Utilitaires ---
 
 def get_base64_of_bin_file(bin_file):
@@ -194,7 +177,7 @@ def display_detailed_route(row):
 # --- Interface Utilisateur (UI) ---
 
 # En-tête de l'application
-logo_base64 = get_base64_of_bin_file("logo.png")
+logo_base64 = get_base64_of_bin_file("logo-ICT-group.png")
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo ICT">' if logo_base64 else ''
 
 st.markdown(f'''
@@ -212,6 +195,7 @@ if 'route_optique_df' not in st.session_state: st.session_state.route_optique_df
 if 'stban_df' not in st.session_state: st.session_state.stban_df = None
 if 'all_unique_values' not in st.session_state: st.session_state.all_unique_values = []
 if 'boite_names' not in st.session_state: st.session_state.boite_names = []
+if 'stban_processed' not in st.session_state: st.session_state.stban_processed = False
 
 # Section de téléchargement des fichiers
 st.markdown('## 📂 Charger vos fichiers')
@@ -239,8 +223,17 @@ else:
     df = st.session_state.route_optique_df
     if not st.session_state.all_unique_values:
         st.session_state.all_unique_values = get_all_unique_values(df)
-    if not st.session_state.boite_names and st.session_state.stban_df is not None:
-        st.session_state.boite_names = extract_boite_names_from_df(st.session_state.stban_df)
+    # La liste des noms de boîtes est toujours extraite du fichier ROP si disponible
+    # Le fichier STBAN est utilisé pour enrichir cette liste si présent
+    if not st.session_state.boite_names or (st.session_state.stban_df is not None and not st.session_state.get("stban_processed", False)):
+        # Initialiser boite_names avec les valeurs du fichier ROP
+        st.session_state.boite_names = get_all_unique_values(df)
+        if st.session_state.stban_df is not None:
+            # Si le fichier STBAN est chargé, ajouter ses noms de boîtes et supprimer les doublons
+            st.session_state.boite_names.extend(extract_boite_names_from_df(st.session_state.stban_df))
+            st.session_state.boite_names = sorted(list(set(st.session_state.boite_names)))
+            st.session_state.stban_processed = True # Marquer que le STBAN a été traité pour les noms de boîtes
+        
 
     with st.container(border=True):
         st.markdown('## 🔍 Recherche avec autocomplétion')
@@ -248,11 +241,16 @@ else:
 
         search_term = ''
         if search_mode == "Recherche par boîte":
-            if st.session_state.boite_names:
+            if st.session_state.route_optique_df is not None:
                 search_term = st.selectbox("Sélectionnez une boîte", st.session_state.boite_names, key="boite_selectbox", label_visibility="collapsed")
+                if st.session_state.stban_df is None:
+                    st.info("Le fichier STBAN n'est pas chargé. Le calcul du nombre de prises ne sera pas disponible pour la recherche par boîte.")
             else:
-                st.info("Chargez un fichier STBAN pour activer la recherche par boîte.")
+                st.info("Veuillez charger un fichier Excel Route Optique pour activer la recherche par boîte.")
+                search_term = st.selectbox("Sélectionnez une boîte", ["Veuillez charger un fichier ROP"], key="boite_selectbox", label_visibility="collapsed", disabled=True)
+
         else:
+            # La recherche générale utilise toujours les valeurs uniques du fichier ROP
             search_term = st.selectbox("Recherche générale", st.session_state.all_unique_values, key="general_search_selectbox", label_visibility="collapsed")
 
         if st.button("Rechercher", type="primary", use_container_width=True) and search_term:
