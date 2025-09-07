@@ -1,3 +1,20 @@
+
+# app_final_v3.py - Application Route Optique avec Streamlit - Version complète et stylisée
+import streamlit as st
+import pandas as pd
+import numpy as np
+from io import BytesIO
+import base64
+import re
+
+# Configuration de la page
+st.set_page_config(
+    page_title="Route Optique ICT",
+    page_icon="🔌",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
 # --- Fonctions Utilitaires ---
 
 def get_base64_of_bin_file(bin_file):
@@ -9,13 +26,510 @@ def get_base64_of_bin_file(bin_file):
     except FileNotFoundError:
         return None
 
-# Charger le CSS personnalisé depuis un fichier externe
-def load_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+# CSS intégré directement dans le code Python
+css = """
+/* Import Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
-# Appliquer le CSS
-load_css('style.css')
+/* Variables CSS */
+:root {
+    --primary-color: #2563eb;
+    --primary-light: #3b82f6;
+    --primary-dark: #1d4ed8;
+    --secondary-color: #64748b;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --error-color: #ef4444;
+    --orange-color: #ea580c;
+    --purple-color: #9333ea;
+    --background-light: #f8fafc;
+    --background-white: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+}
+
+/* Reset et base */
+.main > div {
+    max-width: 1400px;
+    padding-top: 1rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Header amélioré avec logo */
+.app-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.app-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.logo-container {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.logo-container img {
+    height: 80px;
+    width: auto;
+    filter: brightness(0) invert(1);
+}
+
+.header-content {
+    position: relative;
+    z-index: 2;
+    text-align: left;
+}
+
+.app-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.app-header p {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* Cards et containers */
+.upload-container {
+    background: var(--background-white);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--border-color);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.upload-container:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-md);
+}
+
+.search-container {
+    background: var(--background-white);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+}
+
+/* Segment condensé avec éléments colorés */
+.segment-condensed {
+    background: var(--background-white);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    margin: 0.5rem 0;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    flex-wrap: wrap;
+}
+
+.segment-condensed:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.cable-name-condensed {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+.elements-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Tube et fibre condensés avec couleurs */
+.tube-badge-condensed, .fiber-badge-condensed, .boite-badge-condensed {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.8rem;
+    border: 2px solid;
+    min-width: 2.5rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.tube-badge-condensed:hover, .fiber-badge-condensed:hover, .boite-badge-condensed:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.boite-badge-condensed {
+    background-color: #f3f4f6;
+    color: #374151;
+    border-color: #9ca3af;
+}
+	
+.k7-badge-condensed {
+    background-color: #000000;
+    color: #ffffff;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.8rem;
+    border: 2px solid;
+    min-width: 2.5rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.k7-badge-condensed:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+/* Badge pour nombre de prises */
+.prises-badge {
+    background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+    color: #1e3a8a;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid #3b82f6;
+    margin-left: 1rem;
+}
+	
+/* Status badges personnalisés */
+.status-epissuree {
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+    color: #9a3412;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--orange-color);
+    box-shadow: var(--shadow-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    flex-shrink: 0;
+}
+
+.status-en-passage {
+    background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+    color: #6b21a8;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--purple-color);
+    box-shadow: var(--shadow-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    flex-shrink: 0;
+}
+
+.status-stockee {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #166534;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--success-color);
+    box-shadow: var(--shadow-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    flex-shrink: 0;
+}
+
+.status-ok {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #166534;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--success-color);
+    box-shadow: var(--shadow-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    flex-shrink: 0;
+}
+
+.status-nok {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--error-color);
+    box-shadow: var(--shadow-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    flex-shrink: 0;
+}
+
+/* Boutons améliorés */
+.stButton > button {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Metrics améliorés */
+.metric-container {
+    background: var(--background-light);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Input amélioré */
+.stTextInput > div > div > input {
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border-color);
+    padding: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stTextInput > div > div > input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .app-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .app-header h1 {
+        font-size: 2rem;
+    }
+    
+    .logo-container img {
+        height: 60px;
+    }
+    
+    .segment-condensed {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .cable-name-condensed {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .elements-group {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+/* Style pour les zones de téléchargement */
+.stFileUploader {
+    border: 2px dashed var(--primary-color); /* Bordure bleue */
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.stFileUploader:hover {
+    border-color: var(--primary-light); /* Bleu plus foncé au survol */
+    box-shadow: 0 0 15px rgba(30, 144, 255, 0.3); /* Ombre légère */
+}
+
+/* Pour cacher le texte par défaut de Streamlit et ajouter le vôtre */
+.stFileUploader > div > div > p:first-child {
+    display: none;
+}
+
+/* Style pour le bouton 'Browse files' */
+.stFileUploader button {
+    background-color: var(--primary-color); /* Couleur du thème */
+    color: white;
+    border-radius: var(--radius-md);
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+}
+
+.stFileUploader button:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Style pour le message d'avertissement */
+.stAlert {
+    background-color: #FFFACD; /* Jaune pâle */
+    border-left: 5px solid #FFD700; /* Bordure jaune */
+    border-radius: var(--radius-md);
+    padding: 10px;
+    margin-top: 20px;
+}
+
+.stAlert > div > div > p {
+    color: #8B8B00; /* Texte marron-jaune */
+}
+
+/* Style pour les radio buttons */
+div[data-baseweb="radio"] label {
+    background-color: #E0E0E0; /* Gris clair */
+    border-radius: var(--radius-md);
+    padding: 8px 15px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+div[data-baseweb="radio"] label:hover {
+    background-color: #D0D0D0;
+}
+
+div[data-baseweb="radio"] input:checked + div {
+    background-color: var(--primary-color); /* Couleur primaire */
+    color: white;
+}
+
+/* Style pour le bouton de recherche */
+.stButton button {
+    background-color: var(--primary-color); /* Couleur primaire */
+    color: white;
+    border-radius: var(--radius-md);
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.stButton button:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Style pour les expanders (éléments de liste détaillés) */
+.stExpander {
+    border: 1px solid var(--border-color); /* Gris clair */
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+}
+
+.stExpander > div > div > div > p {
+    font-weight: bold;
+    color: var(--primary-color); /* Texte bleu pour le titre de l'expander */
+}
+
+/* Style pour les cartes d'en-tête de section (Tiroir, Position) */
+.st-emotion-cache-1r6dm1c {
+    /* Cible le conteneur de st.columns pour appliquer un style aux cartes */
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.st-emotion-cache-1r6dm1c > div > div > div {
+    /* Cible les divs générés par st.markdown pour les cartes */
+    flex: 1;
+    margin: 0 10px;
+}
+
+/* Style pour chaque étape de route */
+.route-step-card {
+    background-color: var(--background-white);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid var(--border-color);
+}
+"""
+st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 # --- Fonctions de Traitement des Données (Mises en Cache) ---
 
@@ -177,7 +691,7 @@ def display_detailed_route(row):
 # --- Interface Utilisateur (UI) ---
 
 # En-tête de l'application
-logo_base64 = get_base64_of_bin_file("logo-ICT-group.png")
+logo_base64 = get_base64_of_bin_file("logo.png")
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo ICT">' if logo_base64 else ''
 
 st.markdown(f'''
@@ -274,3 +788,5 @@ else:
                         display_detailed_route(row)
             else:
                 st.warning("Aucun résultat trouvé pour votre recherche.")
+
+
