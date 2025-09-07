@@ -612,7 +612,7 @@ def calculate_prises_count(stban_df, boite_name):
     """Fonction principale pour calculer le nombre de prises pour une boîte."""
     if stban_df is None or not boite_name:
         return None
-    prise_col, pto_col = identify_columns(stban_df.columns)
+    prise_col, pto_col = identify_columns(list(stban_df.columns))
     if not prise_col or not pto_col:
         st.warning("Colonnes 'REF_PBO_PRISE' ou 'REF_PBO_PTO' introuvables dans le fichier STBAN.")
         return None
