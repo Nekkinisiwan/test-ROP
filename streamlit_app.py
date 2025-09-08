@@ -779,7 +779,7 @@ def display_detailed_route(row, rop_df):
 # --- Interface Utilisateur (UI) ---
 
 # En-tête de l'application
-logo_base64 = get_base64_of_bin_file("logo-ICT-group.png")
+logo_base64 = get_base64_of_bin_file("logo.png")
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo ICT">' if logo_base64 else ''
 
 st.markdown(f'''
@@ -879,7 +879,7 @@ else:
             # Recherche des ROPs
             # Recherche de la colonne contenant la valeur sélectionnée et application de la condition 'STOCKEE'
             mask = df == search_term
-            exclude_cols = df.columns.str.contains("EXTREMI")
+            exclude_cols = pd.Series(df.columns).str.contains("EXTREMI")
             column_indices = np.where(mask.any(axis=0) & ~exclude_cols)[0]
 
             if len(column_indices) > 0:
