@@ -621,6 +621,28 @@ def calculate_prises_count(stban_df, boite_name):
 
 # --- Fonctions d'Affichage ---
 
+def get_tiroir_pos(row, rop_df):
+    """Extrait le tiroir et la position d'une ligne de ROP."""
+    tiroir = None
+    pos = None
+    for i, val in enumerate(row):
+        if pd.isna(val): continue
+        val_str = str(val).strip()
+        if "TIROIR" in val_str.upper():
+            tiroir = val_str
+        if "POSITION" in val_str.upper():
+            pos = val_str
+    return tiroir, pos
+
+def get_pbo_tube_fiber(row, rop_df):
+    """Extrait les informations PBO, tube et fibre d'une ligne de ROP."""
+    pbo_tube = None
+    pbo_fiber = None
+    # Cette fonction est un placeholder, à adapter selon la structure réelle de vos données
+    # Par exemple, si PBO_TUBE et PBO_FIBRE sont des colonnes spécifiques
+    # Ou si elles sont extraites de manière plus complexe à partir de la ligne
+    return pbo_tube, pbo_fiber
+
 def get_status_class(text):
     """Retourne la classe CSS appropriée en fonction du statut."""
     text_lower = str(text).lower()
@@ -718,45 +740,46 @@ def display_segment_condensed_with_colors(segment):
             # Pour les autres points, on peut les afficher comme un badge simple
             st.markdown(f'<div class="segment-condensed fade-in"><span class="boite-badge-condensed">{point_name}</span></div>', unsafe_allow_html=True)
 
-def display_detailed_route(row):
-    """Affiche la route détaillée pour une ligne de résultat, en utilisant les nouvelles fonctions."""
-    # Extraire Tiroir et Position
-    tiroir, position = None, None
-    base_id = None # Pour stocker l'identifiant base_id
+def display_detailed_route(row, rop_df):
+    """Affiche la route détaillée pour une ligne de résultat, en utilisant les fonctions réintégrées."""
+    tiroir, pos = get_tiroir_pos(row, rop_df)
+    pbo_tube, pbo_fiber = get_pbo_tube_fiber(row, rop_df) # Cette fonction est un placeholder, à adapter si nécessaire
 
+    # Extraire le base_id (première valeur non-NaN de la ligne qui n'est ni Tiroir ni Position)
+    base_id = None
     for item in row.dropna():
         item_str = str(item)
-        if 'Tiroir' in item_str:
-            tiroir = item_str
-        elif 'Position' in item_str:
-            position = item_str
-        # Supposons que base_id est la première valeur non-NaN de la ligne qui n'est ni Tiroir ni Position
-        elif base_id is None and 'Tiroir' not in item_str and 'Position' not in item_str:
+        if "TIROIR" not in item_str.upper() and "POSITION" not in item_str.upper():
             base_id = item_str
+            break
 
-    # Afficher l'identifiant base_id en haut
     if base_id:
-        st.markdown(f'<h3>ROP pour <span class="search-term-highlight">{base_id}</span></h3>', unsafe_allow_html=True)
+        st.markdown(f"<h3>ROP pour <span class=\"search-term-highlight\">{base_id}</span></h3>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
         if tiroir:
-            st.markdown(f'<div class="metric-container"><div class="metric-label">Tiroir</div><div class="metric-value">{tiroir.split(":")[-1].strip()}</div></div>', unsafe_allow_html=True)
+            st.markdown(f"<div class=\"metric-container\"><div class=\"metric-label\">Tiroir</div><div class=\"metric-value\">{tiroir.split(":")[-1].strip()}</div></div>", unsafe_allow_html=True)
     with col2:
-        if position:
-            st.markdown(f'<div class="metric-container"><div class="metric-label">Position</div><div class="metric-value">{position.split(":")[-1].strip()}</div></div>', unsafe_allow_html=True)
+        if pos:
+            st.markdown(f"<div class=\"metric-container\"><div class=\"metric-label\">Position</div><div class=\"metric-value\">{pos.split(":")[-1].strip()}</div></div>", unsafe_allow_html=True)
     
-    st.markdown("<h4>Route Détaillée</h4>", unsafe_allow_html=True)
+    st.markdown("<h4>🗺️ Route Détaillée</h4>", unsafe_allow_html=True)
 
     segments = extract_route_segments(row)
-    for segment in segments:
-        display_segment_condensed_with_colors(segment)
+    if segments:
+        cumulative_lengths = calculate_cumulative_lengths(segments)
+        for i, segment in enumerate(segments):
+            cumul = cumulative_lengths[i] if i < len(cumulative_lengths) else None
+            display_segment_condensed_with_colors(segment)
+    else:
+        st.info("ℹ️ Pas de détails de route disponibles")
 
 
 # --- Interface Utilisateur (UI) ---
 
 # En-tête de l'application
-logo_base64 = get_base64_of_bin_file("logo.png")
+logo_base64 = get_base64_of_bin_file("logo-ICT-group.png")
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo ICT">' if logo_base64 else ''
 
 st.markdown(f'''
@@ -854,8 +877,17 @@ else:
             
             # Recherche des ROPs
             # Recherche des ROPs
-            # La recherche doit se faire sur toutes les colonnes pour trouver le terme
-            matching_rows = df[df.apply(lambda row: row.astype(str).str.contains(re.escape(search_term), case=False, na=False).any(), axis=1)]
+            # Recherche de la colonne contenant la valeur sélectionnée et application de la condition 'STOCKEE'
+            mask = df == search_term
+            exclude_cols = df.columns.str.contains("EXTREMI")
+            column_indices = np.where(mask.any(axis=0) & ~exclude_cols)[0]
+
+            if len(column_indices) > 0:
+                col_index = column_indices[0]
+                matching_rows = df[(df.iloc[:, col_index] == search_term) &
+                                   (df.iloc[:, col_index + 3] == "STOCKEE")]
+            else:
+                matching_rows = pd.DataFrame()
 
             if not matching_rows.empty:
                 st.success(f"{len(matching_rows)} ROP trouvée(s).")
@@ -865,7 +897,7 @@ else:
                     base_id_for_expander = row.dropna().iloc[0] if not row.dropna().empty else 'Détails'
                     expander_title = f"ROP {index + 1} - {base_id_for_expander}"
                     with st.expander(expander_title):
-                        display_detailed_route(row)
+                        display_detailed_route(row, st.session_state.route_optique_df)
             else:
                 st.warning("Aucun résultat trouvé pour votre recherche.")
 
