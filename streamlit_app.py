@@ -778,9 +778,8 @@ def display_detailed_route(row, rop_df):
 
 # --- Interface Utilisateur (UI) ---
 
-# En-tête de l'applicalogo_base64 = get_base64_of_bin_file("./logo-ICT-group.png")_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo ICT">' if logo_base64 else ''
-
-st.markdown(f'''
+# En-tête de l'applilogo_base64 = get_base64_of_bin_file("./logo-ICT-group.png")
+logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo ICT">' if logo_base64 else '''st.markdown(f'''
 <div class="app-header">
     <div class="logo-container">{logo_html}</div>
     <div class="header-content">
