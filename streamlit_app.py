@@ -879,8 +879,8 @@ else:
             # Recherche des ROPs
             # Recherche de la colonne contenant la valeur sélectionnée et application de la condition 'STOCKEE'
             mask = df == search_term
-            exclude_cols = [col for col in df.columns.astype(str) if "EXTREMI" in col]
-            column_indices = np.where(mask.any(axis=0) & ~exclude_cols)[0]
+            is_excluded_col = np.array(["EXTREMI" in col for col in df.columns.astype(str)])
+            column_indices = np.where(mask.any(axis=0) & ~is_excluded_col)[0]
 
             if len(column_indices) > 0:
                 col_index = column_indices[0]
